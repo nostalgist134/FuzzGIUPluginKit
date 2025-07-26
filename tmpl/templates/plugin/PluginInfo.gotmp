@@ -1,0 +1,4 @@
+func PluginInfo() string {
+	pi := /* PLUGIN_INFO */
+	return pi
+}

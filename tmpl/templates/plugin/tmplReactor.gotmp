@@ -1,0 +1,27 @@
+package main
+
+import (
+	"encoding/binary"
+	"encoding/json"
+	"unsafe"
+)
+/* CUSTOM IMPORTS */
+
+/* CODE */
+
+func PluginWrapper(/* FORMAL PARAMETERS */) uintptr {
+    reqJson = args[0].([]byte)
+    respJson := args[1].([]byte)
+	req := new(fuzzTypes.Req)
+	resp := new(fuzzTypes.Resp)
+	json.Unmarshal(reqJson, req)
+	json.Unmarshal(respJson, resp)
+	reaction := React(req, resp, /* ACTUAL PARAMETERS */)
+	reactionJson, _ := json.Marshal(reaction)
+	ret := make([]byte, len(reactionJson)+4)
+	binary.LittleEndian.PutUint32(ret[0:4], uint32(len(reactionJson)))
+	copy(ret[4:], reactionJson)
+	return uintptr(unsafe.Pointer(&ret[0]))
+}
+
+func main() {}

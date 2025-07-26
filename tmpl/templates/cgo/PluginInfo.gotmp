@@ -1,0 +1,7 @@
+//export PluginInfo
+func PluginInfo() uintptr {
+	pi := /* PLUGIN_INFO */
+	ret := make([]string, 0)
+	ret = append(ret, pi)
+	return uintptr(unsafe.Pointer(&ret[0]))
+}
