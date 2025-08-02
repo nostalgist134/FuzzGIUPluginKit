@@ -15,6 +15,12 @@ type Test struct {
 	Expect any   `json:"expect,omitempty"` // 期望返回值
 }
 
+type ResultTest struct {
+	T      Test `json:"test"`
+	Result any  `json:"result"`
+	Passed bool `json:"passed,omitempty"`
+}
+
 func init() {
 	Cmd.AddCommand(subCmdRun)
 	Cmd.AddCommand(subCmdGen)
