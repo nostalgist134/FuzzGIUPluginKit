@@ -132,7 +132,7 @@ func GetImports(filename string, asSource ...bool) ([]string, error) {
 		// 传入的是文件路径
 		data, err := os.ReadFile(filename)
 		if err != nil {
-			return nil, fmt.Errorf("读取文件失败: %w", err)
+			return nil, err
 		}
 		src = data
 	}
@@ -140,7 +140,7 @@ func GetImports(filename string, asSource ...bool) ([]string, error) {
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, filename, src, parser.ImportsOnly)
 	if err != nil {
-		return nil, fmt.Errorf("解析源码失败: %w", err)
+		return nil, err
 	}
 
 	var imports []string

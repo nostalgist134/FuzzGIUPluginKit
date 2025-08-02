@@ -13,7 +13,7 @@ func PluginWrapper(/* FORMAL PARAMETERS */) uintptr {
 	sendMetaJson := args[0].([]byte)
 	sendMeta := new(fuzzTypes.SendMeta)
 	json.Unmarshal(sendMetaJson, sendMeta)
-	resp := ReqSender(sendMeta)
+	resp := /* FUN_NAME */(sendMeta)
 	respJson, _ := json.Marshal(resp)
 	ret := make([]byte, len(respJson)+4)
 	binary.LittleEndian.PutUint32(ret[0:4], uint32(len(respJson)))

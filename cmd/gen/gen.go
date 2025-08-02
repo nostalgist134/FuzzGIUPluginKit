@@ -23,7 +23,7 @@ var Cmd = &cobra.Command{
 func init() {
 	Cmd.Flags().StringP("type", "t", "", "plugin type to generate project. currently "+
 		fmt.Sprintf("support: \n\t%s", convention.PluginTypes))
-	Cmd.Flags().StringP("path", "p", "", "path to generate project")
+	Cmd.Flags().StringP("dir", "d", "", "directory to generate project(auto mkdir)")
 	Cmd.Flags().BoolP("no-net", "n", false, "does not get fuzzTypes.go from net")
 }
 
@@ -150,8 +150,10 @@ func createGoProj(path string, goVer string, code string, noNet bool) string {
 	common.FailExit(err)
 	defer mainGo.Close()
 	filesCreated = append(filesCreated, mainGo)
-	fmt.Printf(" success")
-	// 写入main.go
+	fmt.Println(" success")
+	// 将模板中的模块名替换后，写入main.go
+	code = tmpl.Replace(code, tmpl.PHModuleName, moduleName)
+	code = strings.TrimPrefix(code, "\n")
 	_, err = mainGo.WriteString(code)
 	common.FailExit(err)
 	return filepath.Join(pathExist, pathNonExist)
@@ -165,19 +167,15 @@ func runCmdGen(cmd *cobra.Command, _ []string) {
 		common.FailExit(fmt.Sprintf("unsupported plugin type %s", pType))
 	}
 	// 创建项目
-	goVer := "1.23.2"
 	env1 := env.Check()
-	if env1.GoVersion != "" {
-		goVer = env1.GoVersion
-	}
-	path, _ := cmd.Flags().GetString("path")
+	goVer := env1.GoVersion
+	path, _ := cmd.Flags().GetString("dir")
 	// 如果为空则使用当前目录
 	if path == "" {
 		path = "."
 	}
-	fn := convention.GenPluginFun(pType, false)
-	code := fmt.Sprintf("package main\n\n%s\n", fn)
+	code := convention.GenCodeByType(pType)
 	noNet, _ := cmd.Flags().GetBool("no-net")
 	projPath := createGoProj(path, goVer, code, noNet)
-	fmt.Printf("successfully create go project at %s", projPath)
+	fmt.Printf("successfully create go project at %s\n", projPath)
 }

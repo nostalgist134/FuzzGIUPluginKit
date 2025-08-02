@@ -5,16 +5,17 @@ import (
 )
 
 var Cmd = &cobra.Command{
-	Use:   "test",
-	Short: "test a plugin",
-	Run:   runCmdTest,
+	Use: "test",
+	Short: "test a plugin's functionality. this command expect plugin tested be\n" +
+		"built with PluginInfo(-i of build command)",
+}
+
+type Test struct {
+	Args   []any `json:"args,omitempty"`   // 测试参数列表
+	Expect any   `json:"expect,omitempty"` // 期望返回值
 }
 
 func init() {
-	Cmd.Flags().StringP("path", "p", "", "path of plugin binary file")
-	Cmd.Flags().StringP("expr", "e", "", "parameter expression to be passed to plugin")
-}
-
-func runCmdTest(cmd *cobra.Command, args []string) {
-	// 还没想好怎么写
+	Cmd.AddCommand(subCmdRun)
+	Cmd.AddCommand(subCmdGen)
 }

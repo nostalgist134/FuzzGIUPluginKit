@@ -16,7 +16,7 @@ func PluginWrapper(/* FORMAL PARAMETERS */) uintptr {
 	resp := new(fuzzTypes.Resp)
 	json.Unmarshal(reqJson, req)
 	json.Unmarshal(respJson, resp)
-	reaction := React(req, resp, /* ACTUAL PARAMETERS */)
+	reaction := /* FUN_NAME */(req, resp, /* ACTUAL PARAMETERS */)
 	reactionJson, _ := json.Marshal(reaction)
 	ret := make([]byte, len(reactionJson)+4)
 	binary.LittleEndian.PutUint32(ret[0:4], uint32(len(reactionJson)))

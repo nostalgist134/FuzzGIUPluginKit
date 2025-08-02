@@ -9,7 +9,7 @@ import (
 	goPlugin "plugin"
 )
 
-func PluginInfo(pluginFile string) (*convention.PluginInfo, error) {
+func GetPluginInfo(pluginFile string) (*convention.PluginInfo, error) {
 	p, err := goPlugin.Open(pluginFile)
 	if err != nil {
 		return nil, err

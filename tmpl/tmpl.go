@@ -11,6 +11,8 @@ const (
 	PHFormalPara    = "/* FORMAL PARAMETERS */"
 	PHActualPara    = "/* ACTUAL PARAMETERS */"
 	PHPlugInfo      = "/* PLUGIN_INFO */"
+	PHFunName       = "/* FUN_NAME */"
+	PHModuleName    = "/* MODULE_NAME */"
 )
 
 //go:embed templates/**/*
@@ -56,6 +58,6 @@ func GetTemplate(os, pType string) (string, error) {
 	return string(t), nil
 }
 
-func Replace(src string, placeHolder string, to string, count int) string {
-	return strings.Replace(src, placeHolder, to, count)
+func Replace(src string, placeHolder string, to string) string {
+	return strings.Replace(src, placeHolder, to, -1)
 }

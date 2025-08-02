@@ -13,7 +13,7 @@ func PluginWrapper(/* FORMAL PARAMETERS */) uintptr {
 	fuzzJson := args[0].([]byte)
 	fuzz := new(fuzzTypes.Fuzz)
 	json.Unmarshal(fuzzJson, fuzz)
-	newFuzz := Preprocessor(fuzz, /* ACTUAL PARAMETERS */)
+	newFuzz := /* FUN_NAME */(fuzz, /* ACTUAL PARAMETERS */)
 	newFuzzJson, _ := json.Marshal(newFuzz)
 	ret := make([]byte, len(newFuzzJson)+4)
 	binary.LittleEndian.PutUint32(ret[0:4], uint32(len(newFuzzJson)))

@@ -5,6 +5,8 @@ import (
 	"FuzzGIUPluginKit/tmpl"
 	"encoding/json"
 	"fmt"
+	"github.com/nostalgist134/FuzzGIU/components/fuzzTypes"
+	"github.com/nostalgist134/FuzzGIU/components/plugin"
 	"os"
 	"strconv"
 	"strings"
@@ -58,8 +60,8 @@ func CheckPluginFun(pluginType string, fd FuncDecl) (bool, string) {
 	return true, ""
 }
 
-// GenPluginFun 根据插件类型生成对应的插件函数
-func GenPluginFun(pluginType string, export bool) string {
+// genPluginFun 根据插件类型生成对应的插件函数
+func genPluginFun(pluginType string) string {
 	correctFd := GetFuncDecl(pluginType)
 	funName := GetPluginFunName(pluginType)
 	sb := strings.Builder{}
@@ -68,7 +70,10 @@ func GenPluginFun(pluginType string, export bool) string {
 		sb.WriteString(p.Name + " " + p.Type)
 		sb.WriteString(", ")
 	}
-	paraList := sb.String() + "/* CUSTOM ARGUMENTS HERE */"
+	paraList := sb.String()
+	if pluginType != "reqSender" {
+		paraList += "/* CUSTOM ARGUMENTS HERE */"
+	}
 	// 返回值
 	retVal := ""
 	switch correctFd.RetType {
@@ -77,12 +82,9 @@ func GenPluginFun(pluginType string, export bool) string {
 	case "[]string":
 		retVal = "[]string{}"
 	default:
-		retVal = fmt.Sprintf("&%s{}", correctFd.RetType)
+		retVal = fmt.Sprintf("&%s{}", strings.TrimPrefix(correctFd.RetType, "*"))
 	}
 	fn := fmt.Sprintf("func %s(%s) %s {\n	return %s\n}\n", funName, paraList, correctFd.RetType, retVal)
-	if export {
-		fn = fmt.Sprintf("//export %s\n%s", funName, fn)
-	}
 	return fn
 }
 
@@ -105,7 +107,7 @@ func GenPlugInfoFun(pName, pType, goVer, usageFile string, params []ParaMeta) st
 	if err != nil {
 		fmt.Printf("gen PluginInfo failed, reason: %v. skip\n", err)
 	}
-	pFun = tmpl.Replace(pFun, tmpl.PHPlugInfo, quoted, 1)
+	pFun = tmpl.Replace(pFun, tmpl.PHPlugInfo, quoted)
 	return pFun
 }
 
@@ -135,4 +137,119 @@ func GetParamStrings(os, pluginType string, params []Param) (string, string) {
 		}
 	}
 	return formalParams.String(), actualParams.String()
+}
+
+func GetPreDefinedArgs(pType string) []any {
+	switch pType {
+	case PluginTypes[IndPTypeReqSender]:
+		return []any{new(fuzzTypes.SendMeta)}
+	case PluginTypes[IndPTypePreproc]:
+		return []any{new(fuzzTypes.Fuzz)}
+	case PluginTypes[IndPTypeReact]:
+		return []any{new(fuzzTypes.Req), new(fuzzTypes.Resp)}
+	}
+	return nil
+}
+
+// BuildFd 根据插件实际信息返回一个FuncDecl结构
+func BuildFd(inf *PluginInfo) FuncDecl {
+	params := make([]Param, 0)
+	fd := FuncDecl{}
+	for _, pm := range inf.Params {
+		params = append(params, pm.Param)
+	}
+	fd.RetType = GetFuncDecl(inf.Type).RetType
+	fd.Params = params
+	return fd
+}
+
+// 根据函数声明确定是否需要import语句
+func needImport(fd FuncDecl) string {
+	imp := "\nimport \"/* MODULE_NAME *//components/fuzzTypes\"\n"
+	if strings.Index(fd.RetType, "fuzzTypes") != -1 {
+		return imp
+	} else {
+		for _, p := range fd.Params {
+			if strings.Index(p.Type, "fuzzTypes") != -1 {
+				return imp
+			}
+		}
+	}
+	return ""
+}
+
+// GenCodeByType 根据插件类型生成一个完整的可通过编译的代码骨架
+func GenCodeByType(pluginType string) string {
+	fn := genPluginFun(pluginType)
+	imp := needImport(GetFuncDecl(pluginType))
+	return fmt.Sprintf("package main\n%s\n%s\n", imp, fn)
+}
+
+func GetStruct(structType string) any {
+	switch structType {
+	case "*fuzzTypes.Fuzz":
+		return &fuzzTypes.Fuzz{}
+	case "*fuzzTypes.Req":
+		return &fuzzTypes.Req{}
+	case "*fuzzTypes.Resp":
+		return &fuzzTypes.Resp{}
+	case "*fuzzTypes.SendMeta":
+		return &fuzzTypes.SendMeta{}
+	case "*fuzzTypes.Reaction":
+		return &fuzzTypes.Reaction{}
+	default:
+		return nil
+	}
+}
+
+// GetRetPtr 取得指向插件返回值的指针
+func GetRetPtr(retType string) any {
+	switch retType {
+	case "string":
+		s := ""
+		return &s
+	case "[]string":
+		sSlice := make([]string, 0)
+		return &sSlice
+	default:
+		return GetStruct(retType)
+	}
+}
+
+// GetFullStruct 获取一个填写完整的结构体指针
+func GetFullStruct(structType string) any {
+	switch structType {
+	case "*fuzzTypes.Fuzz":
+		return fullFuzz
+	case "*fuzzTypes.Req":
+		return fullReq
+	case "*fuzzTypes.Resp":
+		return fullResp
+	case "*fuzzTypes.SendMeta":
+		return fullSendMeta
+	case "*fuzzTypes.Reaction":
+		return fullReaction
+	default:
+		return nil
+	}
+}
+
+// GetPluginPathByPType 根据插件类型获取插件所在相对目录
+func GetPluginPathByPType(pType string) string {
+	ret := plugin.BaseDir
+	switch pType {
+	case PluginTypes[IndPTypePlGen]:
+		ret += plugin.RelPathPlGen
+	case PluginTypes[IndPTypePreproc]:
+		ret += plugin.RelPathPreprocessor
+	case PluginTypes[IndPTypeReqSender]:
+		ret += plugin.RelPathReqSender
+	case PluginTypes[IndPTypePlProc]:
+		ret += plugin.RelPathPlProc
+	case PluginTypes[IndPTypeReact]:
+		ret += plugin.RelPathReactor
+	default:
+		ret = ""
+	}
+	return ret
 }

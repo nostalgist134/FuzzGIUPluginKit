@@ -64,7 +64,12 @@ func Check(golangPath ...string) Env {
 		return environ
 	}
 	// 获取golang版本
-	environ.GoVersion = strings.Split(string(ver), " ")[2][2:]
+	verFields := strings.Split(string(ver), " ")
+	if len(verFields) < 3 || len(verFields[2]) < 3 {
+		environ.GoVersion = "unknown/unrecognizable"
+	} else {
+		environ.GoVersion = strings.Split(string(ver), " ")[2][2:]
+	}
 	return environ
 }
 
@@ -80,9 +85,12 @@ func GetBuildArgs(e Env, out string, goFile string) []string {
 
 func RemoveIntermediateFiles(e Env, out string) {
 	// 删除wrapped.go文件
+	fmt.Print("remove wrapped.go...")
 	err := os.Remove("wrapped.go")
 	if err != nil {
 		fmt.Printf("remove wrapped.go failed: %v\n", err)
+	} else {
+		fmt.Println("done")
 	}
 	if e.OS != "windows" {
 		return
@@ -94,9 +102,12 @@ func RemoveIntermediateFiles(e Env, out string) {
 	} else {
 		hFile = out + ".h"
 	}
+	fmt.Print("remove ", hFile, "...")
 	err = os.Remove(hFile)
 	if err != nil {
 		fmt.Printf("remove %s failed: %v\n", hFile, err)
+	} else {
+		fmt.Println("done")
 	}
 }
 

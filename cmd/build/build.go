@@ -61,7 +61,7 @@ func getImpStr(imports []string) string {
 	return sb.String()
 }
 
-func buildSharedLib(goPath string, src string, out string, env1 env.Env, funInfo *convention.FuncDecl) {
+func buildSharedLib(goPath string, src string, out string, env1 env.Env, funInfo *convention.FuncDecl) string {
 	// go mod tidy
 	fmt.Printf("> %s mod tidy\n", goPath)
 	c := exec.Command(goPath, "mod", "tidy")
@@ -103,6 +103,7 @@ func buildSharedLib(goPath string, src string, out string, env1 env.Env, funInfo
 	common.FailExit(err)
 	out, _ = filepath.Abs(out)
 	fmt.Printf("successfully built %s, parameters: %v\n", out, funInfo.Params)
+	return out
 }
 
 func runCmdBuild(cmd *cobra.Command, _ []string) {
@@ -138,7 +139,8 @@ func runCmdBuild(cmd *cobra.Command, _ []string) {
 	var fd *convention.FuncDecl
 	var paraMeta []convention.ParaMeta
 	pType := ""
-	for _, pFun := range convention.PluginFunNames {
+	pFun := ""
+	for _, pFun = range convention.PluginFunNames {
 		fd, paraMeta, err = goParser.FindFunction(pluginFile, pFun)
 		if os.IsNotExist(err) {
 			continue
@@ -159,19 +161,21 @@ func runCmdBuild(cmd *cobra.Command, _ []string) {
 
 	wrapped, err := tmpl.GetTemplate(env1.OS, pType)
 	common.FailExit(err)
+	// 替换模板中的函数名占位符
+	wrapped = tmpl.Replace(wrapped, tmpl.PHFunName, pFun)
 	// 替换模板中去重的import语句
 	tempImports, _ := goParser.GetImports(wrapped, true)
 	srcImports, _ := goParser.GetImports(pluginFile)
 	eImports := exclusiveImports(srcImports, tempImports)
-	wrapped = tmpl.Replace(wrapped, tmpl.PHCustomImports, getImpStr(eImports), -1)
+	wrapped = tmpl.Replace(wrapped, tmpl.PHCustomImports, getImpStr(eImports))
 	// 替换形参与实参列表
 	formal, actual := convention.GetParamStrings(env1.OS, pType, fd.Params)
-	wrapped = tmpl.Replace(wrapped, tmpl.PHFormalPara, formal, -1)
-	wrapped = tmpl.Replace(wrapped, tmpl.PHActualPara, actual, -1)
+	wrapped = tmpl.Replace(wrapped, tmpl.PHFormalPara, formal)
+	wrapped = tmpl.Replace(wrapped, tmpl.PHActualPara, actual)
 	// 将code占位符替换为源码
 	code, err := goParser.GetCode(pluginFile)
 	common.FailExit(err)
-	wrapped = tmpl.Replace(wrapped, tmpl.PHCode, code, -1)
+	wrapped = tmpl.Replace(wrapped, tmpl.PHCode, code)
 	// 输出文件名
 	out, _ := cmd.Flags().GetString("out")
 	if out == "" {
@@ -181,7 +185,7 @@ func runCmdBuild(cmd *cobra.Command, _ []string) {
 	// 根据需要生成PluginInfo函数
 	if genPi, _ := cmd.Flags().GetBool("info"); genPi {
 		usageFile, _ := cmd.Flags().GetString("usage-file")
-		wrapped += "\n" + convention.GenPlugInfoFun(out, pType, env1.GoVersion, usageFile, paraMeta)
+		wrapped += "\n" + convention.GenPlugInfoFun(filepath.Base(out), pType, env1.GoVersion, usageFile, paraMeta)
 	}
 	// 进入项目目录，创建并写入文件
 	err = os.Chdir(filepath.Dir(pluginFile))

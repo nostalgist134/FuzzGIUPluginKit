@@ -7,7 +7,7 @@ import "unsafe"
 
 func PluginWrapper(/* FORMAL PARAMETERS */) uintptr {
 	payload, ok := args[0].(string)
-	s := PayloadProcessor(payload, /* ACTUAL PARAMETERS */)
+	s := /* FUN_NAME */(payload, /* ACTUAL PARAMETERS */)
 	ret := make([]string, 0)
 	ret = append(ret, s) // 欺骗编译器，将s分配到堆中
 	return uintptr(unsafe.Pointer(&ret[0]))

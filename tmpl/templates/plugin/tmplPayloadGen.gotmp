@@ -11,7 +11,7 @@ import (
 /* CODE */
 
 func PluginWrapper( /* FORMAL PARAMETERS */ ) uintptr {
-	sSlice := PayloadGenerator( /* ACTUAL PARAMETERS */ )
+	sSlice := /* FUN_NAME */( /* ACTUAL PARAMETERS */ )
 	buffer := bytes.Buffer{}
 	binary.Write(&buffer, binary.LittleEndian, int32(len(sSlice))) // string切片的长度
 	for _, s := range sSlice {
