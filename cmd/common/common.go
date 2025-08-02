@@ -29,7 +29,7 @@ func FailExit(reason any, code ...int) {
 	if len(code) > 0 {
 		exitCode = code[0]
 	}
-	fmt.Printf("%s execution failed, reason: %s\nnow exitting...\n", subCmd, reason)
+	fmt.Fprintf(os.Stderr, "%s execution failed, reason: %s\nnow exitting...\n", subCmd, reason)
 	exitDefer()
 	os.Exit(exitCode)
 }

@@ -42,8 +42,9 @@ func init() {
 	subCmdGen.Flags().StringP("out", "o", "test.json", "out file")
 	subCmdGen.Flags().StringP("files", "f", "", "source files, each seperated with comma,"+
 		" WHICH MEANS YOU CAN'T USE A FILE WHOSE\nNAME CONTAINS COMMA. files must be as many as plugin args")
-	subCmdGen.Flags().StringP("struct", "s", "", "marshal single struct by type to a "+
-		"file, which can be used as data source file")
+	subCmdGen.Flags().StringP("struct", "s", "", "marshal structs by type to a "+
+		"file, which can be used as data source file in the future")
+	subCmdGen.Flags().IntP("num", "n", 1, "number of struct to marshal")
 }
 
 func tryMarshal(test *Test) error {
@@ -257,12 +258,35 @@ func genTestsFiles(fd convention.FuncDecl, fileNames string) ([]*Test, error) {
 	return tests, nil
 }
 
-func genStructJsonFile(struType string, to string) {
+// genStructJsonFile 将一种类型的结构转化为json文件，若数量为1则转化单个json对象，否则转化为切片
+func genStructJsonFile(struType string, to string, num int) {
+	if num <= 0 {
+		return
+	}
 	f, err := os.Create(to)
 	common.FailExit(err)
 	defer f.Close()
+	struType = strings.TrimSpace(struType)
+	if len(struType) > 0 && struType[0] != '*' {
+		struType = "*" + struType
+	}
 	s := convention.GetFullStruct(struType)
-	b, err := json.MarshalIndent(s, "", "  ")
+	if s == nil {
+		common.FailExit(fmt.Errorf("unsupported struct type '%s'", struType))
+	}
+	// 若数量为1则转化单个对象
+	if num == 1 {
+		b, err := json.MarshalIndent(s, "", "  ")
+		common.FailExit(err)
+		f.Write(b)
+		return
+	}
+	structs := make([]any, 0)
+	structs = append(structs, s)
+	for i := 1; i < num; i++ {
+		structs = append(structs, convention.GetFullStruct(struType))
+	}
+	b, err := json.MarshalIndent(structs, "", "  ")
 	common.FailExit(err)
 	f.Write(b)
 }
@@ -272,7 +296,8 @@ func runCmdGen(cmd *cobra.Command, _ []string) {
 	out, _ := cmd.Flags().GetString("out")
 	stru, _ := cmd.Flags().GetString("struct")
 	if stru != "" {
-		genStructJsonFile(stru, out)
+		numStru, _ := cmd.Flags().GetInt("num")
+		genStructJsonFile(stru, out, numStru)
 	} else {
 		path, _ := cmd.Flags().GetString("path")
 		if path == "" {
