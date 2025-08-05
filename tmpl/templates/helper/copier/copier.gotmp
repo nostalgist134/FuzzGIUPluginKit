@@ -1,0 +1,106 @@
+package copier
+
+import (
+	"bytes"
+	"/*MODULE_NAME*//components/fuzzTypes"
+)
+
+// CopyFuzz 复制fuzz结构（PlList不复制）
+func CopyFuzz(f *fuzzTypes.Fuzz) *fuzzTypes.Fuzz {
+	if f == nil {
+		return nil
+	}
+
+	newFuzz := new(fuzzTypes.Fuzz)
+
+	// 拷贝 Preprocess
+	newFuzz.Preprocess.Preprocessors = f.Preprocess.Preprocessors
+	newFuzz.Preprocess.Mode = f.Preprocess.Mode
+	newFuzz.Preprocess.PlTemp = make(map[string]fuzzTypes.PayloadTemp)
+	for k, v := range f.Preprocess.PlTemp {
+		newFuzz.Preprocess.PlTemp[k] = fuzzTypes.PayloadTemp{
+			Generators: v.Generators,
+			Processors: v.Processors,
+			PlList:     nil, // PlList可以不复制，因为执行doFuzz会重新走一遍生成
+		}
+	}
+
+	// 拷贝 Send
+	newFuzz.Send.Request = f.Send.Request
+	newFuzz.Send.Request.HttpSpec.Headers = append([]string{}, f.Send.Request.HttpSpec.Headers...)
+	newFuzz.Send.Proxies = append([]string{}, f.Send.Proxies...)
+	newFuzz.Send.Retry = f.Send.Retry
+
+	// 拷贝 React
+	newFuzz.React.Reactor = f.React.Reactor
+	newFuzz.React.Filter = f.React.Filter
+	newFuzz.React.Filter.Words = append([]fuzzTypes.Range{}, f.React.Filter.Words...)
+	newFuzz.React.Filter.Size = append([]fuzzTypes.Range{}, f.React.Filter.Size...)
+	newFuzz.React.Filter.Lines = append([]fuzzTypes.Range{}, f.React.Filter.Lines...)
+	newFuzz.React.Filter.Code = append([]fuzzTypes.Range{}, f.React.Filter.Code...)
+	newFuzz.React.Matcher = f.React.Matcher
+	newFuzz.React.Matcher.Words = append([]fuzzTypes.Range{}, f.React.Matcher.Words...)
+	newFuzz.React.Matcher.Size = append([]fuzzTypes.Range{}, f.React.Matcher.Size...)
+	newFuzz.React.Matcher.Lines = append([]fuzzTypes.Range{}, f.React.Matcher.Lines...)
+	newFuzz.React.Matcher.Code = append([]fuzzTypes.Range{}, f.React.Matcher.Code...)
+	newFuzz.React.RecursionControl = f.React.RecursionControl
+	newFuzz.React.RecursionControl.StatCodes = append([]fuzzTypes.Range{}, f.React.RecursionControl.StatCodes...)
+	newFuzz.React.OutSettings = f.React.OutSettings
+
+	// 拷贝 Misc
+	newFuzz.Misc = f.Misc
+
+	return newFuzz
+}
+
+// CopyReq 复制fuzzTypes.Req结构
+func CopyReq(r *fuzzTypes.Req) *fuzzTypes.Req {
+	if r == nil {
+		return nil
+	}
+	newReq := new(fuzzTypes.Req)
+	newReq = r
+	if len(r.HttpSpec.Headers) != 0 {
+		newReq.HttpSpec.Headers = make([]string, 0)
+		for _, h := range r.HttpSpec.Headers {
+			newReq.HttpSpec.Headers = append(newReq.HttpSpec.Headers, h)
+		}
+	}
+	return newReq
+}
+
+// CopySendMeta 复制sendMeta结构
+func CopySendMeta(m *fuzzTypes.SendMeta) *fuzzTypes.SendMeta {
+	if m == nil {
+		return nil
+	}
+	newMeta := new(fuzzTypes.SendMeta)
+	newMeta = m
+	newMeta.Request = CopyReq(m.Request)
+	return newMeta
+}
+
+// CopyResp 复制Resp结构
+func CopyResp(resp *fuzzTypes.Resp) *fuzzTypes.Resp {
+	if resp == nil {
+		return nil
+	}
+	newResp := new(fuzzTypes.Resp)
+	newResp = resp
+	buf := bytes.Buffer{}
+	buf.Write(resp.RawResponse)
+	newResp.RawResponse = buf.Bytes()
+	return newResp
+}
+
+// CopyReaction 复制reaction结构
+func CopyReaction(reac *fuzzTypes.Reaction) *fuzzTypes.Reaction {
+	if reac == nil {
+		return nil
+	}
+	r := new(fuzzTypes.Reaction)
+	r = reac
+	r.NewReq = CopyReq(reac.NewReq)
+	r.NewJob = CopyFuzz(reac.NewJob)
+	return r
+}

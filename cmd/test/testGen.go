@@ -38,10 +38,9 @@ var subCmdGen = &cobra.Command{
 }
 
 func init() {
-	subCmdGen.Flags().StringP("path", "p", "", "path of plugin")
+	subCmdGen.Flags().StringP("path", "p", "", "path of plugin to generate test data")
 	subCmdGen.Flags().StringP("out", "o", "test.json", "out file")
-	subCmdGen.Flags().StringP("files", "f", "", "source files, each seperated with comma,"+
-		" WHICH MEANS YOU CAN'T USE A FILE WHOSE\nNAME CONTAINS COMMA. files must be as many as plugin args")
+	subCmdGen.Flags().StringP("files", "f", "", "source files, each seperated with comma")
 	subCmdGen.Flags().StringP("struct", "s", "", "marshal structs by type to a "+
 		"file, which can be used as data source file in the future")
 	subCmdGen.Flags().IntP("num", "n", 1, "number of struct to marshal")
