@@ -1,1 +1,77 @@
+// Package request 为工具提供发送请求的辅助函数，目前支持发送http请求，使用request.HTTP发送
 package request
+
+import (
+	"bytes"
+	"crypto/tls"
+	"net"
+	"net/http"
+	"net/url"
+	"strings"
+	"sync"
+	"time"
+)
+
+var cliPool = sync.Pool{
+	New: func() any {
+		transport := &http.Transport{
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).DialContext,
+			MaxIdleConns:          100,
+			IdleConnTimeout:       90 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+			ExpectContinueTimeout: 1 * time.Second,
+		}
+		return &http.Client{
+			Transport: transport,
+		}
+	},
+}
+
+// 初始化 Http 客户端，设置代理、超时、重定向等
+func initHttpCli(proxy string, timeout int) (*http.Client, error) {
+	// 从池中获取一个 http.Client
+	cli := cliPool.Get().(*http.Client)
+	tr := cli.Transport.(*http.Transport)
+	tr.ForceAttemptHTTP2 = true
+
+	// 设置代理
+	if proxy != "" {
+		proxyUrl, err := url.Parse(proxy)
+		if err != nil {
+			return nil, err
+		}
+		tr.Proxy = http.ProxyURL(proxyUrl)
+	} else {
+		tr.Proxy = nil
+	}
+	cli.Transport = tr
+
+	// 设置超时
+	cli.Timeout = time.Duration(timeout) * time.Second
+	return cli, nil
+}
+
+func HTTP(url, method string, headers []string, data, proxy string, timeout int) (*http.Response, error) {
+	cli, err := initHttpCli(proxy, timeout)
+	if err != nil {
+		return nil, err
+	}
+	defer cliPool.Put(cli)
+	httpReq, err := http.NewRequest(method, url, bytes.NewBuffer([]byte(data)))
+	if err != nil {
+		return nil, err
+	}
+	for _, h := range headers {
+		if indColon := strings.Index(h, ":"); indColon == -1 || indColon == len(h)-1 {
+			httpReq.Header.Add(strings.TrimSpace(h), "")
+		} else {
+			httpReq.Header.Add(strings.TrimSpace(h[:indColon]), strings.TrimSpace(h[indColon+1:]))
+		}
+	}
+	resp, err := cli.Do(httpReq)
+	return resp, err
+}

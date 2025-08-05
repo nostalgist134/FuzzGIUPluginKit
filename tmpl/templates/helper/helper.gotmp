@@ -1,8 +1,9 @@
-package copier
+// Package helper 定义了一些在插件中能够使用的辅助函数
+package helper
 
 import (
 	"bytes"
-	"/*MODULE_NAME*//components/fuzzTypes"
+	"github.com/nostalgist134/FuzzGIU/components/fuzzTypes"
 )
 
 // CopyFuzz 复制fuzz结构（PlList不复制）
@@ -10,7 +11,6 @@ func CopyFuzz(f *fuzzTypes.Fuzz) *fuzzTypes.Fuzz {
 	if f == nil {
 		return nil
 	}
-
 	newFuzz := new(fuzzTypes.Fuzz)
 
 	// 拷贝 Preprocess
@@ -24,10 +24,10 @@ func CopyFuzz(f *fuzzTypes.Fuzz) *fuzzTypes.Fuzz {
 			PlList:     nil, // PlList可以不复制，因为执行doFuzz会重新走一遍生成
 		}
 	}
+	newFuzz.Preprocess.ReqTemplate = f.Preprocess.ReqTemplate
+	newFuzz.Preprocess.ReqTemplate.HttpSpec.Headers = append([]string{}, f.Preprocess.ReqTemplate.HttpSpec.Headers...)
 
 	// 拷贝 Send
-	newFuzz.Send.Request = f.Send.Request
-	newFuzz.Send.Request.HttpSpec.Headers = append([]string{}, f.Send.Request.HttpSpec.Headers...)
 	newFuzz.Send.Proxies = append([]string{}, f.Send.Proxies...)
 	newFuzz.Send.Retry = f.Send.Retry
 
@@ -59,12 +59,10 @@ func CopyReq(r *fuzzTypes.Req) *fuzzTypes.Req {
 		return nil
 	}
 	newReq := new(fuzzTypes.Req)
-	newReq = r
+	*newReq = *r
 	if len(r.HttpSpec.Headers) != 0 {
-		newReq.HttpSpec.Headers = make([]string, 0)
-		for _, h := range r.HttpSpec.Headers {
-			newReq.HttpSpec.Headers = append(newReq.HttpSpec.Headers, h)
-		}
+		newReq.HttpSpec.Headers = make([]string, len(r.HttpSpec.Headers))
+		copy(newReq.HttpSpec.Headers, r.HttpSpec.Headers)
 	}
 	return newReq
 }
@@ -75,7 +73,7 @@ func CopySendMeta(m *fuzzTypes.SendMeta) *fuzzTypes.SendMeta {
 		return nil
 	}
 	newMeta := new(fuzzTypes.SendMeta)
-	newMeta = m
+	*newMeta = *m
 	newMeta.Request = CopyReq(m.Request)
 	return newMeta
 }
@@ -86,7 +84,7 @@ func CopyResp(resp *fuzzTypes.Resp) *fuzzTypes.Resp {
 		return nil
 	}
 	newResp := new(fuzzTypes.Resp)
-	newResp = resp
+	*newResp = *resp
 	buf := bytes.Buffer{}
 	buf.Write(resp.RawResponse)
 	newResp.RawResponse = buf.Bytes()
@@ -99,8 +97,34 @@ func CopyReaction(reac *fuzzTypes.Reaction) *fuzzTypes.Reaction {
 		return nil
 	}
 	r := new(fuzzTypes.Reaction)
-	r = reac
+	*r = *reac
 	r.NewReq = CopyReq(reac.NewReq)
 	r.NewJob = CopyFuzz(reac.NewJob)
 	return r
+}
+
+func countWords(data []byte) int {
+	count := 0
+	inWord := false
+	for _, b := range data {
+		if b == ' ' || b == '\n' || b == '\t' || b == '\r' || b == '\f' || b == '\v' {
+			inWord = false
+		} else if !inWord {
+			inWord = true
+			count++
+		}
+	}
+	return count
+}
+
+// GetRawBytesInfo 获取一个字节切片的相关信息，[0]->行数，[1]->词数，[2]->大小
+func GetRawBytesInfo(b []byte) []int {
+	if len(b) == 0 {
+		return []int{0, 0, 0}
+	}
+	lines := bytes.Count(b, []byte{'\n'})
+	if b[len(b)-1] != '\n' {
+		lines++
+	}
+	return []int{lines, countWords(b), len(b)}
 }

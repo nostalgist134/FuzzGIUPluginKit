@@ -85,8 +85,9 @@ var fullFilter = fuzzTypes.Match{
 var fullFuzz = &fuzzTypes.Fuzz{
 	Preprocess: struct {
 		PlTemp        map[string]fuzzTypes.PayloadTemp `json:"pl_temp,omitempty"`
-		Preprocessors []fuzzTypes.Plugin               `json:"preprocessors,omitempty"`
-		Mode          string                           `json:"mode,omitempty"`
+		Preprocessors []fuzzTypes.Plugin               `json:"preprocessors,omitempty"` // 使用的自定义预处理器
+		Mode          string                           `json:"mode,omitempty"`          // 出现多个payload关键字时处理的模式
+		ReqTemplate   fuzzTypes.Req                    `json:"request_tmpl,omitempty"`  // 含有fuzz关键字的请求模板
 	}{
 		PlTemp: map[string]fuzzTypes.PayloadTemp{
 			"FUZZ1": {
@@ -114,17 +115,16 @@ var fullFuzz = &fuzzTypes.Fuzz{
 				},
 			},
 		},
+		ReqTemplate: *fullReq,
 	},
 	Send: struct {
-		Request             fuzzTypes.Req `json:"request,omitempty"`
-		Proxies             []string      `json:"proxies,omitempty"`
-		HttpFollowRedirects bool          `json:"http_follow_redirects,omitempty"`
-		Retry               int           `json:"retry,omitempty"`
-		RetryCode           string        `json:"retry_code,omitempty"`
-		RetryRegex          string        `json:"retry_regex,omitempty"`
-		Timeout             int           `json:"timeout,omitempty"`
+		Proxies             []string `json:"proxies,omitempty"`
+		HttpFollowRedirects bool     `json:"http_follow_redirects,omitempty"`
+		Retry               int      `json:"retry,omitempty"`
+		RetryCode           string   `json:"retry_code,omitempty"`
+		RetryRegex          string   `json:"retry_regex,omitempty"`
+		Timeout             int      `json:"timeout,omitempty"`
 	}{
-		Request:             *fullReq,
 		Proxies:             []string{"http://127.0.0.1:8080", "http://127.0.0.1:7890"},
 		HttpFollowRedirects: true,
 		Retry:               2,
