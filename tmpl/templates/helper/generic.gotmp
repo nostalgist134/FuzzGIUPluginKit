@@ -1,0 +1,76 @@
+package helper
+
+import (
+	"bytes"
+	"crypto/md5"
+	"crypto/sha1"
+	"crypto/sha256"
+	"crypto/sha512"
+	"errors"
+	"fmt"
+	"hash"
+	"hash/crc32"
+	"hash/crc64"
+	"hash/fnv"
+	"strings"
+)
+
+func countWords(data []byte) int {
+	count := 0
+	inWord := false
+	for _, b := range data {
+		if b == ' ' || b == '\n' || b == '\t' || b == '\r' || b == '\f' || b == '\v' {
+			inWord = false
+		} else if !inWord {
+			inWord = true
+			count++
+		}
+	}
+	return count
+}
+
+// GetRawBytesInfo 获取一个字节切片的信息：[0]->行数，[1]->词数，[2]->大小
+func GetRawBytesInfo(data []byte) []int {
+	if len(data) == 0 {
+		return []int{0, 0, 0}
+	}
+	lines := bytes.Count(data, []byte{'\n'})
+	if data[len(data)-1] != '\n' {
+		lines++
+	}
+	return []int{lines, countWords(data), len(data)}
+}
+
+// Hash 计算给定算法下的哈希值，返回 hex 编码的字符串
+func Hash(alg string, data []byte) (string, error) {
+	var h hash.Hash
+	switch strings.ToLower(alg) {
+	case "md5":
+		h = md5.New()
+	case "sha1":
+		h = sha1.New()
+	case "sha256":
+		h = sha256.New()
+	case "sha512":
+		h = sha512.New()
+	case "fnv", "fnv32":
+		h = fnv.New32()
+	case "fnv32a":
+		h = fnv.New32a()
+	case "fnv64":
+		h = fnv.New64()
+	case "fnv64a":
+		h = fnv.New64a()
+	case "crc32":
+		h = crc32.NewIEEE()
+	case "crc64":
+		h = crc64.New(crc64.MakeTable(crc64.ECMA))
+	default:
+		return "", errors.New("unsupported hash algorithm: " + alg)
+	}
+	_, err := h.Write(data)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x", h.Sum(nil)), nil
+}

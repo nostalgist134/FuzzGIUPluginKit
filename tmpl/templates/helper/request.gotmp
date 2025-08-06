@@ -1,5 +1,4 @@
-// Package request 为工具提供发送请求的辅助函数，目前支持发送http请求，使用request.HTTP发送
-package request
+package helper
 
 import (
 	"bytes"
@@ -55,7 +54,7 @@ func initHttpCli(proxy string, timeout int) (*http.Client, error) {
 	return cli, nil
 }
 
-func HTTP(url, method string, headers []string, data, proxy string, timeout int) (*http.Response, error) {
+func HttpRequest(url, method string, headers []string, data, proxy string, timeout int) (*http.Response, error) {
 	cli, err := initHttpCli(proxy, timeout)
 	if err != nil {
 		return nil, err

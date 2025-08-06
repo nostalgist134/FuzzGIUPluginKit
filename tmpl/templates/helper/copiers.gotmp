@@ -1,9 +1,8 @@
-// Package helper 定义了一些在插件中能够使用的辅助函数
 package helper
 
 import (
 	"bytes"
-	"github.com/nostalgist134/FuzzGIU/components/fuzzTypes"
+	"/* MODULE_NAME *//components/fuzzTypes"
 )
 
 // CopyFuzz 复制fuzz结构（PlList不复制）
@@ -101,30 +100,4 @@ func CopyReaction(reac *fuzzTypes.Reaction) *fuzzTypes.Reaction {
 	r.NewReq = CopyReq(reac.NewReq)
 	r.NewJob = CopyFuzz(reac.NewJob)
 	return r
-}
-
-func countWords(data []byte) int {
-	count := 0
-	inWord := false
-	for _, b := range data {
-		if b == ' ' || b == '\n' || b == '\t' || b == '\r' || b == '\f' || b == '\v' {
-			inWord = false
-		} else if !inWord {
-			inWord = true
-			count++
-		}
-	}
-	return count
-}
-
-// GetRawBytesInfo 获取一个字节切片的相关信息，[0]->行数，[1]->词数，[2]->大小
-func GetRawBytesInfo(b []byte) []int {
-	if len(b) == 0 {
-		return []int{0, 0, 0}
-	}
-	lines := bytes.Count(b, []byte{'\n'})
-	if b[len(b)-1] != '\n' {
-		lines++
-	}
-	return []int{lines, countWords(b), len(b)}
 }

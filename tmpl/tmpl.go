@@ -2,6 +2,7 @@ package tmpl
 
 import (
 	"embed"
+	"io/fs"
 	"strings"
 )
 
@@ -29,29 +30,59 @@ func pathJoin(path string, path2 ...string) string {
 	return sb.String()
 }
 
+type FileTmpl struct {
+	Name    string
+	Content []byte
+}
+
+// GetTemplatesDir 枚举某个子目录下所有模板文件（非递归）
+func GetTemplatesDir(dir string) []FileTmpl {
+	var tmpls []FileTmpl
+	basePath := pathJoin("templates", dir)
+
+	entries, err := fs.ReadDir(templates, basePath)
+	if err != nil {
+		return nil
+	}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		fullPath := pathJoin(basePath, entry.Name())
+		content, err := templates.ReadFile(fullPath)
+		if err != nil {
+			continue
+		}
+		tmpls = append(tmpls, FileTmpl{
+			Name:    entry.Name(),
+			Content: content,
+		})
+	}
+	return tmpls
+}
+
 func GetTemplate(os, pType string) (string, error) {
-	path := "templates"
+	basePath := "templates"
 	if pType == "fuzzTypes" {
-		// path = filepath.Join(path, pType, pType+".gotmp")
-		path = pathJoin(path, pType, pType+".gotmp")
+		basePath = pathJoin(basePath, pType, pType+".gotmp")
 		// 傻逼embed库只支持正斜杆，不支持反斜杆，windows用filepath.Join反斜杠就打不开，妈了个逼的调半天才发现不是我的问题，吃大便去吧
-		ft, err := templates.ReadFile(path)
+		ft, err := templates.ReadFile(basePath)
 		if err != nil {
 			return "", err
 		}
 		return string(ft), err
 	}
 	if os == "windows" {
-		path = pathJoin(path, "cgo")
+		basePath = pathJoin(basePath, "cgo")
 	} else {
-		path = pathJoin(path, "plugin")
+		basePath = pathJoin(basePath, "plugin")
 	}
 	fileName := strings.Title(pType) + ".gotmp"
 	if pType != "pluginInfo" {
 		fileName = "tmpl" + fileName
 	}
-	path = pathJoin(path, fileName)
-	t, err := templates.ReadFile(path)
+	basePath = pathJoin(basePath, fileName)
+	t, err := templates.ReadFile(basePath)
 	if err != nil {
 		return "", err
 	}

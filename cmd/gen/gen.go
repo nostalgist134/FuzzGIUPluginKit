@@ -79,6 +79,33 @@ func splitExistPath(fullPath string) (string, string, error) {
 
 var filesCreated = make([]*os.File, 0)
 
+func addHelpers(baseDir string, moduleName string) error {
+	helperDir := filepath.Join(baseDir, "helper")
+	err := os.Mkdir(helperDir, 0755)
+	if err != nil {
+		return err
+	}
+	files := tmpl.GetTemplatesDir("helper")
+	// 创建并写入helper文件
+	for _, f := range files {
+		helperName := filepath.Join(helperDir, f.Name)
+		if strings.Index(helperName, ".gotmp") == len(helperName)-6 {
+			helperName = helperName[:len(helperName)-3]
+		}
+		fPtr, err := os.Create(helperName)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to create file %s: %v\n", helperName, err)
+		}
+		contentStr := string(f.Content)
+		contentStr = tmpl.Replace(contentStr, tmpl.PHModuleName, moduleName)
+		_, err = fPtr.WriteString(contentStr)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to write to file %s: %v\n", helperName, err)
+		}
+	}
+	return nil
+}
+
 func createGoProj(path string, goVer string, code string, noNet bool) string {
 	// 收尾函数
 	pathExist, pathNonExist, _ := splitExistPath(path)
@@ -143,6 +170,9 @@ func createGoProj(path string, goVer string, code string, noNet bool) string {
 		fmt.Printf("from github - %s\n", contentUrl)
 	}
 	_, err = ft.WriteString(s)
+	common.FailExit(err)
+	// 创建并写入helper文件
+	err = addHelpers("./components/", moduleName)
 	common.FailExit(err)
 	// 创建main.go文件
 	fmt.Printf("creating main.go")
