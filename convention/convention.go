@@ -15,7 +15,7 @@ import (
 // GetPluginFunName 根据插件类型查找函数名
 func GetPluginFunName(pluginType string) string {
 	for i, t := range PluginTypes {
-		if t == pluginType {
+		if strings.ToLower(t) == strings.ToLower(pluginType) {
 			return PluginFunNames[i]
 		}
 	}
