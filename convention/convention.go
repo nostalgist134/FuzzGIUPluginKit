@@ -33,8 +33,10 @@ func GetPluginType(pluginFunName string) string {
 }
 
 func GetFuncDecl(pluginType string) FuncDecl {
-	if fd, ok := FuncDecls[pluginType]; ok {
-		return fd
+	for t, fd := range FuncDecls {
+		if strings.ToLower(t) == strings.ToLower(pluginType) {
+			return fd
+		}
 	}
 	return FuncDecl{}
 }
