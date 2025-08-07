@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/nostalgist134/FuzzGIU/components/fuzzTypes"
-	"github.com/nostalgist134/FuzzGIU/components/plugin"
 	"os"
 	"strconv"
 	"strings"
@@ -236,24 +235,4 @@ func GetFullStruct(structType string) any {
 	default:
 		return nil
 	}
-}
-
-// GetPluginPathByPType 根据插件类型获取插件所在相对目录
-func GetPluginPathByPType(pType string) string {
-	ret := plugin.BaseDir
-	switch pType {
-	case PluginTypes[IndPTypePlGen]:
-		ret += plugin.RelPathPlGen
-	case PluginTypes[IndPTypePreproc]:
-		ret += plugin.RelPathPreprocessor
-	case PluginTypes[IndPTypeReqSender]:
-		ret += plugin.RelPathReqSender
-	case PluginTypes[IndPTypePlProc]:
-		ret += plugin.RelPathPlProc
-	case PluginTypes[IndPTypeReact]:
-		ret += plugin.RelPathReactor
-	default:
-		ret = ""
-	}
-	return ret
 }
