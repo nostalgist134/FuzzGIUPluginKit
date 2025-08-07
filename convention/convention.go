@@ -69,12 +69,12 @@ func genPluginFun(pluginType string) string {
 	// 参数列表
 	for _, p := range correctFd.Params {
 		sb.WriteString(p.Name + " " + p.Type)
-		if pluginType != "reqSender" {
+		if strings.ToLower(pluginType) != "reqsender" {
 			sb.WriteString(", ")
 		}
 	}
 	paraList := sb.String()
-	if pluginType != "reqSender" {
+	if strings.ToLower(pluginType) != "reqsender" {
 		paraList += "/* CUSTOM ARGUMENTS HERE */"
 	}
 	// 返回值
