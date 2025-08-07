@@ -54,6 +54,7 @@ func initHttpCli(proxy string, timeout int) (*http.Client, error) {
 	return cli, nil
 }
 
+// HttpRequest 发送一个http请求
 func HttpRequest(url, method string, headers []string, data, proxy string, timeout int) (*http.Response, error) {
 	cli, err := initHttpCli(proxy, timeout)
 	if err != nil {

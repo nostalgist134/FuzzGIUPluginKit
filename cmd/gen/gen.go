@@ -184,6 +184,7 @@ func createGoProj(path string, goVer string, code string, noNet bool) string {
 	// 将模板中的模块名替换后，写入main.go
 	code = tmpl.Replace(code, tmpl.PHModuleName, moduleName)
 	code = strings.TrimPrefix(code, "\n")
+	code = strings.TrimSuffix(code, "\n")
 	_, err = mainGo.WriteString(code)
 	common.FailExit(err)
 	return filepath.Join(pathExist, pathNonExist)
