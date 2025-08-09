@@ -133,7 +133,7 @@ var fullFuzz = &fuzzTypes.Fuzz{
 		Timeout:             3,
 	},
 	React: struct {
-		Reactor          string                   `json:"reactors,omitempty"`
+		Reactor          fuzzTypes.Plugin         `json:"reactors,omitempty"`
 		OutSettings      fuzzTypes.OutputSettings `json:"output_settings,omitempty"`
 		Filter           fuzzTypes.Match          `json:"filter,omitempty"`
 		Matcher          fuzzTypes.Match          `json:"matcher,omitempty"`
@@ -146,7 +146,7 @@ var fullFuzz = &fuzzTypes.Fuzz{
 			Splitter          string            `json:"splitter,omitempty"`
 		} `json:"recursion_control,omitempty"`
 	}{
-		Reactor: "test",
+		Reactor: fuzzTypes.Plugin{Name: "test", Args: []any{1, 2, 3}},
 		OutSettings: fuzzTypes.OutputSettings{
 			Verbosity:    3,
 			IgnoreError:  false,
@@ -173,11 +173,13 @@ var fullFuzz = &fuzzTypes.Fuzz{
 		},
 	},
 	Misc: struct {
-		PoolSize int `json:"pool_size,omitempty"`
-		Delay    int `json:"delay,omitempty"`
+		PoolSize         int           `json:"pool_size,omitempty"`
+		Delay            int           `json:"delay,omitempty"`
+		DelayGranularity time.Duration `json:"delay_granularity,omitempty"`
 	}{
-		PoolSize: 64,
-		Delay:    50,
+		PoolSize:         64,
+		Delay:            50,
+		DelayGranularity: time.Millisecond,
 	},
 }
 

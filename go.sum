@@ -29,6 +29,11 @@ github.com/nostalgist134/FuzzGIU v0.0.8-2 h1:FIfwUOUSi17qcdhcwyykrRI4LBvf/juhzmX
 github.com/nostalgist134/FuzzGIU v0.0.8-2/go.mod h1:shMjNzs9mIzG77FPP7QRXL3SmwVY9cdk/KUZk/X/Fsg=
 github.com/nostalgist134/FuzzGIU v0.0.8 h1:pCb5nnoNtNRq/5kc/GUgfbwhuiAAnellk3GqmWpyLGM=
 github.com/nostalgist134/FuzzGIU v0.0.8/go.mod h1:shMjNzs9mIzG77FPP7QRXL3SmwVY9cdk/KUZk/X/Fsg=
+github.com/nostalgist134/FuzzGIU v0.0.9/go.mod h1:shMjNzs9mIzG77FPP7QRXL3SmwVY9cdk/KUZk/X/Fsg=
+github.com/nostalgist134/FuzzGIU v0.1.0 h1:Nwkj7ZSi5xOVE3Hjo+el0ZeirC+quKWP+PZWWsGd/mc=
+github.com/nostalgist134/FuzzGIU v0.1.0/go.mod h1:YXFW+qy6wyQFWwvbIG//XsHe+lTbyBJYfR0hXvfRFrw=
+github.com/nostalgist134/reusableBytes v0.0.2 h1:eQj9aiaaOEB5xdbnidrb8uT3COvC9TUYGznty4qyZzw=
+github.com/nostalgist134/reusableBytes v0.0.2/go.mod h1:mZemtIh4BOVlMNa+hxomvKz2+3IPuVTGSoBBOwdGKm8=
 github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d h1:x3S6kxmy49zXVVyhcnrFqxvNVCBPb2KZ9hV2RBdS840=
 github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d/go.mod h1:IuKpRQcYE1Tfu+oAQqaLisqDeXgjyyltCfsaoYN18NQ=
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
