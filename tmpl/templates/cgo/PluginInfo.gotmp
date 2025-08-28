@@ -1,7 +1,8 @@
 //export PluginInfo
 func PluginInfo() uintptr {
 	pi := /* PLUGIN_INFO */
-	ret := make([]string, 0)
-	ret = append(ret, pi)
-	return uintptr(unsafe.Pointer(&ret[0]))
+	buffer := bytes.Buffer{}
+    binary.Write(&buffer, binary.LittleEndian, int32(len(pi)))
+    buffer.WriteString(pi)
+    return uintptr(unsafe.Pointer(&buffer.Bytes()[0]))
 }

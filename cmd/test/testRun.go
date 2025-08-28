@@ -142,7 +142,7 @@ func callPluginExpr(callExpr string, pluginPath string) {
 	pName1 := filepath.Join("../../", pName)
 	// 切换到插件所在目录
 	cwd := env.GetCwd()
-	err := os.Chdir(pluginPath)
+	err := os.Chdir(filepath.Dir(pluginPath))
 	common.FailExit(err)
 	defer os.Chdir(cwd)
 

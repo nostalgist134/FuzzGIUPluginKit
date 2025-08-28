@@ -5,12 +5,11 @@ import "unsafe"
 
 /* CODE */
 
-func PluginWrapper(/* FORMAL PARAMETERS */) uintptr {
-	payload, ok := args[0].(string)
-	s := /* FUN_NAME */(payload, /* ACTUAL PARAMETERS */)
-	ret := make([]string, 0)
-	ret = append(ret, s) // 欺骗编译器，将s分配到堆中
-	return uintptr(unsafe.Pointer(&ret[0]))
+func PluginWrapper(payload string) uintptr {
+    s := /* FUN_NAME */(payload)
+    heapStr := new(string)
+    *heapStr = s
+    return uintptr(unsafe.Pointer(heapStr))
 }
 
 func main() {}

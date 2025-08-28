@@ -28,6 +28,12 @@ func ReadInputLine(prompt string, trim ...bool) string {
 	return line
 }
 
+func stringFromPtr(strBytes uintptr) string {
+	sb := strings.Builder{}
+	sb.WriteString(unsafe.String((*byte)(unsafe.Pointer(strBytes+4)), *(*int32)(unsafe.Pointer(strBytes))))
+	return sb.String()
+}
+
 // GetPluginInfo 调用插件的PluginInfo函数并返回
 func GetPluginInfo(pluginFile string) (*convention.PluginInfo, error) {
 	dll, err := syscall.LoadDLL(pluginFile)
@@ -43,8 +49,8 @@ func GetPluginInfo(pluginFile string) (*convention.PluginInfo, error) {
 	if err != nil && (!errors.As(err, &errno) || errno != 0) {
 		return nil, err
 	}
-	s := (*string)(unsafe.Pointer(ret))
-	jsonBytes := []byte(*s)
+	s := stringFromPtr(ret)
+	jsonBytes := []byte(s)
 	pInfo := new(convention.PluginInfo)
 	err = json.Unmarshal(jsonBytes, pInfo)
 	return pInfo, err
