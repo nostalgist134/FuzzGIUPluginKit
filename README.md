@@ -11,6 +11,8 @@ go get
 go build
 ``````
 
+或者到release中下载编译好的文件
+
 # 使用方法
 
 `fuzzGIUPluginKit`提供了4个子命令，分别用于开发、编译与测试插件
