@@ -1,10 +1,10 @@
 package info
 
 import (
-	"FuzzGIUPluginKit/cmd/common"
-	"FuzzGIUPluginKit/convention"
 	"encoding/json"
 	"fmt"
+	"github.com/nostalgist134/FuzzGIUPluginKit/cmd/common"
+	"github.com/nostalgist134/FuzzGIUPluginKit/convention"
 	"github.com/spf13/cobra"
 	"os"
 )

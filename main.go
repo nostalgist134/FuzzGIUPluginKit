@@ -1,6 +1,6 @@
 package main
 
-import "FuzzGIUPluginKit/cmd"
+import "github.com/nostalgist134/FuzzGIUPluginKit/cmd"
 
 func main() {
 	cmd.RunCmd()

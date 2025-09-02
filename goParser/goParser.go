@@ -1,9 +1,9 @@
 package goParser
 
 import (
-	"FuzzGIUPluginKit/convention"
 	"bytes"
 	"fmt"
+	"github.com/nostalgist134/FuzzGIUPluginKit/convention"
 	"go/ast"
 	"go/format"
 	"go/parser"

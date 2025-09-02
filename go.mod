@@ -1,4 +1,4 @@
-module FuzzGIUPluginKit
+module github.com/nostalgist134/FuzzGIUPluginKit
 
 go 1.25
 

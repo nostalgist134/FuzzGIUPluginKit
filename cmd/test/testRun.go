@@ -1,13 +1,13 @@
 package test
 
 import (
-	"FuzzGIUPluginKit/cmd/common"
-	"FuzzGIUPluginKit/convention"
-	"FuzzGIUPluginKit/env"
 	"encoding/json"
 	"fmt"
 	"github.com/nostalgist134/FuzzGIU/components/fuzzTypes"
 	FGPlugin "github.com/nostalgist134/FuzzGIU/components/plugin"
+	"github.com/nostalgist134/FuzzGIUPluginKit/cmd/common"
+	"github.com/nostalgist134/FuzzGIUPluginKit/convention"
+	"github.com/nostalgist134/FuzzGIUPluginKit/env"
 	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"

@@ -3,11 +3,11 @@
 package common
 
 import (
-	"FuzzGIUPluginKit/convention"
 	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/nostalgist134/FuzzGIUPluginKit/convention"
 	"os"
 	"strings"
 	"syscall"

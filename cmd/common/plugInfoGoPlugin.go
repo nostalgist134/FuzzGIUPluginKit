@@ -3,9 +3,9 @@
 package common
 
 import (
-	"FuzzGIUPluginKit/convention"
 	"encoding/json"
 	"errors"
+	"github.com/nostalgist134/FuzzGIUPluginKit/convention"
 	goPlugin "plugin"
 )
 

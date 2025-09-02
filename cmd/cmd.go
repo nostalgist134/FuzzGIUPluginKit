@@ -1,11 +1,11 @@
 package cmd
 
 import (
-	"FuzzGIUPluginKit/cmd/build"
-	"FuzzGIUPluginKit/cmd/gen"
-	"FuzzGIUPluginKit/cmd/info"
-	"FuzzGIUPluginKit/cmd/test"
 	"fmt"
+	"github.com/nostalgist134/FuzzGIUPluginKit/cmd/build"
+	"github.com/nostalgist134/FuzzGIUPluginKit/cmd/gen"
+	"github.com/nostalgist134/FuzzGIUPluginKit/cmd/info"
+	"github.com/nostalgist134/FuzzGIUPluginKit/cmd/test"
 	"github.com/spf13/cobra"
 )
 

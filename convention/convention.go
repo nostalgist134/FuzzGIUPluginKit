@@ -1,11 +1,11 @@
 package convention
 
 import (
-	"FuzzGIUPluginKit/env"
-	"FuzzGIUPluginKit/tmpl"
 	"encoding/json"
 	"fmt"
 	"github.com/nostalgist134/FuzzGIU/components/fuzzTypes"
+	"github.com/nostalgist134/FuzzGIUPluginKit/env"
+	"github.com/nostalgist134/FuzzGIUPluginKit/tmpl"
 	"os"
 	"strconv"
 	"strings"
