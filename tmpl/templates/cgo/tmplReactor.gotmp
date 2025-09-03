@@ -6,24 +6,55 @@ import (
 	"encoding/json"
 	"unsafe"
 )
+
 /* CUSTOM IMPORTS */
 
 /* CODE */
 
 //export PluginWrapper
-func PluginWrapper(reqJson *byte, reqJsonLen int, respJson *byte, respJsonLen int, /* FORMAL PARAMETERS */) uintptr {
+func PluginWrapper(
+    dst *byte, dstLen int,
+	reqJson *byte, reqJsonLen int,
+	respJson *byte, respJsonLen int,
+	/* FORMAL PARAMETERS */
+) uintptr {
+	// 解析请求
 	reqJsonSlice := unsafe.Slice(reqJson, reqJsonLen)
 	req := new(fuzzTypes.Req)
-	json.Unmarshal(reqJsonSlice, req)
+	if err := json.Unmarshal(reqJsonSlice, req); err != nil {
+		return -1
+	}
+
+	// 解析响应
 	respJsonSlice := unsafe.Slice(respJson, respJsonLen)
 	resp := new(fuzzTypes.Resp)
-	json.Unmarshal(respJsonSlice, resp)
+	if err := json.Unmarshal(respJsonSlice, resp); err != nil {
+		return -1
+	}
+
+	// 执行核心逻辑
 	reaction := /* FUN_NAME */(req, resp, /* ACTUAL PARAMETERS */)
-	reactionJson, _ := json.Marshal(reaction)
-	ret := make([]byte, len(reactionJson)+4)
-	binary.LittleEndian.PutUint32(ret[0:4], uint32(len(reactionJson)))
-	copy(ret[4:], reactionJson)
-	return uintptr(unsafe.Pointer(&ret[0]))
+
+	// 序列化结果
+	reactionJson, err := json.Marshal(reaction)
+	if err != nil {
+	    return -1
+	}
+
+	// 计算需要的空间
+	needed := 4 + len(reactionJson)
+
+	// 如果缓冲区不足或为空，直接返回所需长度
+	if outBuf == nil || outBufLen < needed {
+		return uintptr(needed)
+	}
+
+	// 写入结果
+	buf := unsafe.Slice(outBuf, outBufLen)
+	binary.LittleEndian.PutUint32(buf[0:4], uint32(len(reactionJson)))
+	copy(buf[4:], reactionJson)
+
+	return uintptr(needed)
 }
 
 func main() {}

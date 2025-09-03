@@ -1,8 +1,22 @@
 //export PluginInfo
-func PluginInfo() uintptr {
+func PluginInfo(dst uintptr, dstLen uintptr) uintptr {
+    writeString := func (dst unsafe.Pointer, src string, maxLen uintptr) uintptr {
+        if len(src) == 0 {
+                return uintptr(0)
+        }
+        if dst == nil {
+            return uintptr(len(src))
+        }
+
+        srcBytes := unsafe.Slice(unsafe.StringData(src), len(src))
+        if len(srcBytes) > int(maxLen) {
+            return uintptr(len(srcBytes)) // 返回所需长度，不写入
+        }
+
+        dstSlice := unsafe.Slice((*byte)(dst), int(maxLen))
+        n := copy(dstSlice, srcBytes)
+        return uintptr(n)
+    }
 	pi := /* PLUGIN_INFO */
-	buffer := bytes.Buffer{}
-    binary.Write(&buffer, binary.LittleEndian, int32(len(pi)))
-    buffer.WriteString(pi)
-    return uintptr(unsafe.Pointer(&buffer.Bytes()[0]))
+    return writeString(unsafe.Pointer(dst), pi, dstLen)
 }

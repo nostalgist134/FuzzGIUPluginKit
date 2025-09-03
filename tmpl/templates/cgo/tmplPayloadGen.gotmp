@@ -2,7 +2,6 @@ package main
 
 import "C"
 import (
-	"bytes"
 	"encoding/binary"
 	"unsafe"
 )
@@ -11,16 +10,48 @@ import (
 
 /* CODE */
 
-//export PluginWrapper
-func PluginWrapper( /* FORMAL PARAMETERS */ ) uintptr {
-	sSlice := /* FUN_NAME */( /* ACTUAL PARAMETERS */ )
-	buffer := bytes.Buffer{}
-	binary.Write(&buffer, binary.LittleEndian, int32(len(sSlice))) // string切片的长度
+var sliceCache []string = nil
+
+// writeBytes 将 string 切片编码为二进制格式写入 dst
+func writeBytes(dst unsafe.Pointer, dstLen uintptr, sSlice []string) uintptr {
+	// 先计算所需空间大小
+	needed := 4 // 存放切片长度
 	for _, s := range sSlice {
-		binary.Write(&buffer, binary.LittleEndian, int32(len(s)))
-		buffer.WriteString(s)
+		needed += 4 + len(s)
 	}
-	return uintptr(unsafe.Pointer(&buffer.Bytes()[0]))
+	// 如果 dst==nil 或空间不足，直接返回所需长度
+	if dst == nil || dstLen < uintptr(needed) {
+		return uintptr(needed)
+	}
+	buf := unsafe.Slice((*byte)(dst), int(dstLen))
+	// 写入切片长度
+	binary.LittleEndian.PutUint32(buf[:4], uint32(len(sSlice)))
+	offset := 4
+	// 写入每个字符串
+	for _, s := range sSlice {
+		binary.LittleEndian.PutUint32(buf[offset:offset+4], uint32(len(s)))
+		offset += 4
+		copy(buf[offset:], s)
+		offset += len(s)
+	}
+	return uintptr(offset)
+}
+
+//export PluginWrapper
+func PluginWrapper(dst uintptr, dstLen uintptr, /* FORMAL PARAMETERS */) uintptr {
+    ret := uintptr(0)
+    // 与处理不同，生成器可以采用缓存，因为它单个流程中只调用1次，且为单协程调用
+    if sliceCache != nil {
+        ret = writeBytes(unsafe.Pointer(dst), dstLen, sliceCache)
+        sliceCache = nil
+        return ret
+    }
+	sSlice := /* FUN_NAME */(/* ACTUAL PARAMETERS */)
+	ret = writeBytes(unsafe.Pointer(dst), dstLen, sSlice)
+	if ret > dstLen {
+	    sliceCache = sSlice
+	}
+	return ret
 }
 
 func main() {}

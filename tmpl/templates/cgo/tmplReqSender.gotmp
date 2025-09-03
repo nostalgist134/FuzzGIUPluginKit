@@ -6,21 +6,44 @@ import (
 	"encoding/json"
 	"unsafe"
 )
+
 /* CUSTOM IMPORTS */
 
 /* CODE */
 
 //export PluginWrapper
-func PluginWrapper(sendMetaJson *byte, sendMetaJsonLen int) uintptr {
+func PluginWrapper(dst *byte, dstLen int, sendMetaJson *byte, sendMetaJsonLen int) uintptr {
+	// 解析输入
 	sendMetaJsonSlice := unsafe.Slice(sendMetaJson, sendMetaJsonLen)
 	sendMeta := new(fuzzTypes.SendMeta)
-	json.Unmarshal(sendMetaJsonSlice, sendMeta)
-	resp := /* FUN_NAME */(sendMeta)
-	respJson, _ := json.Marshal(resp)
-	ret := make([]byte, len(respJson)+4)
-	binary.LittleEndian.PutUint32(ret[0:4], uint32(len(respJson)))
-	copy(ret[4:], respJson)
-	return uintptr(unsafe.Pointer(&ret[0]))
+	if err := json.Unmarshal(sendMetaJsonSlice, sendMeta); err != nil {
+		return -1
+	}
+
+	// 调用核心逻辑
+	resp := /* FUN_NAME */(sendMeta, /* ACTUAL PARAMETERS */)
+
+	// 序列化
+	respJson, err := json.Marshal(resp)
+	if err != nil {
+	    return -1
+	}
+
+	// 计算需要的大小 (4字节长度 + 数据)
+	needed := 4 + len(respJson)
+
+	// 如果调用方给的缓冲区不足，直接返回需要的大小
+	if outBuf == nil || outBufLen < needed {
+		return uintptr(needed)
+	}
+
+	// 写入到调用方提供的缓冲区
+	buf := unsafe.Slice(outBuf, outBufLen)
+	binary.LittleEndian.PutUint32(buf[0:4], uint32(len(respJson)))
+	copy(buf[4:], respJson)
+
+	// 返回实际写入的大小
+	return uintptr(needed)
 }
 
 func main() {}

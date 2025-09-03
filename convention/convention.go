@@ -87,7 +87,8 @@ func genPluginFun(pluginType string) string {
 	default:
 		retVal = fmt.Sprintf("&%s{}", strings.TrimPrefix(correctFd.RetType, "*"))
 	}
-	fn := fmt.Sprintf("func %s(%s) %s {\n	return %s\n}\n", funName, paraList, correctFd.RetType, retVal)
+	fn := fmt.Sprintf("func %s(%s) %s {\n	// IMPLEMENT YOUR CODE HERE\n"+
+		"	return %s\n}\n", funName, paraList, correctFd.RetType, retVal)
 	return fn
 }
 

@@ -6,21 +6,38 @@ import (
 	"encoding/json"
 	"unsafe"
 )
+
 /* CUSTOM IMPORTS */
 
 /* CODE */
 
+func writeBytes(dst unsafe.Pointer, dstLen uintptr, data []byte) uintptr {
+	needed := 4 + len(data)
+	if dst == nil || dstLen < uintptr(needed) {
+		return uintptr(needed)
+	}
+
+	buf := unsafe.Slice((*byte)(dst), int(dstLen))
+	binary.LittleEndian.PutUint32(buf[:4], uint32(len(data)))
+	copy(buf[4:], data)
+	return uintptr(needed)
+}
+
 //export PluginWrapper
-func PluginWrapper(fuzzJson *byte, jsonLen int, /* FORMAL PARAMETERS */) uintptr {
+func PluginWrapper(dst uintptr, dstLen uintptr, fuzzJson *byte, jsonLen int, /* FORMAL PARAMETERS */) uintptr {
 	jsonSlice := unsafe.Slice(fuzzJson, jsonLen)
 	fuzz := new(fuzzTypes.Fuzz)
-	json.Unmarshal(jsonSlice, fuzz)
+	if err := json.Unmarshal(jsonSlice, fuzz); err != nil {
+		return -1
+	}
+
 	newFuzz := /* FUN_NAME */(fuzz, /* ACTUAL PARAMETERS */)
-	newFuzzJson, _ := json.Marshal(newFuzz)
-	ret := make([]byte, len(newFuzzJson)+4)
-	binary.LittleEndian.PutUint32(ret[0:4], uint32(len(newFuzzJson)))
-	copy(ret[4:], newFuzzJson)
-	return uintptr(unsafe.Pointer(&ret[0]))
+
+	newFuzzJson, err := json.Marshal(newFuzz)
+	if err != nil {
+		return -1
+	}
+	return writeBytes(unsafe.Pointer(dst), dstLen, newFuzzJson)
 }
 
 func main() {}

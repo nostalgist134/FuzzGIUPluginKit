@@ -44,14 +44,28 @@ func GetPluginInfo(pluginFile string) (*convention.PluginInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	ret, _, err := pi.Call()
+
+	needed := 640
+	buffer := make([]byte, needed)
+
+	ret, _, err := pi.Call(uintptr(unsafe.Pointer(&buffer[0])), uintptr(needed))
 	var errno syscall.Errno
 	if err != nil && (!errors.As(err, &errno) || errno != 0) {
 		return nil, err
 	}
-	s := stringFromPtr(ret)
-	jsonBytes := []byte(s)
+
+	// 二次调用
+	if int(ret) > needed {
+		buffer = append(buffer, make([]byte, int(ret)-needed)...)
+		_, _, err = pi.Call(uintptr(unsafe.Pointer(&buffer[0])), ret)
+		if err != nil {
+			return nil, err
+		}
+	}
+	// 将缓存切到返回长度
+	buffer = buffer[:int(ret)]
+
 	pInfo := new(convention.PluginInfo)
-	err = json.Unmarshal(jsonBytes, pInfo)
+	err = json.Unmarshal(buffer, pInfo)
 	return pInfo, err
 }
