@@ -9,16 +9,17 @@ import (
 
 /* CODE */
 
-func PluginWrapper(/* FORMAL PARAMETERS */) uintptr {
+func PluginWrapper(/* FORMAL PARAMETERS */) ([]byte, error) {
 	fuzzJson := args[0].([]byte)
 	fuzz := new(fuzzTypes.Fuzz)
-	json.Unmarshal(fuzzJson, fuzz)
+
+	err := json.Unmarshal(fuzzJson, fuzz)
+	if err != nil {
+	    return nil, err
+	}
+
 	newFuzz := /* FUN_NAME */(fuzz, /* ACTUAL PARAMETERS */)
-	newFuzzJson, _ := json.Marshal(newFuzz)
-	ret := make([]byte, len(newFuzzJson)+4)
-	binary.LittleEndian.PutUint32(ret[0:4], uint32(len(newFuzzJson)))
-	copy(ret[4:], newFuzzJson)
-	return uintptr(unsafe.Pointer(&ret[0]))
+	return json.Marshal(newFuzz)
 }
 
 func main() {}

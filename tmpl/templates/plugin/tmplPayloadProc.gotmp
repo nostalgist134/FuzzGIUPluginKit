@@ -5,11 +5,9 @@ import "unsafe"
 
 /* CODE */
 
-func PluginWrapper(payload string) uintptr {
-    s := /* FUN_NAME */(payload)
-    heapStr := new(string)
-    *heapStr = s
-    return uintptr(unsafe.Pointer(heapStr))
+func PluginWrapper(/* FORMAL PARAMETERS */) ([]byte, error) {
+    s := /* FUN_NAME */(args[0], /* ACTUAL PARAMETERS */)
+    return unsafe.Slice(unsafe.StringData(s), len(s)), nil
 }
 
 func main() {}

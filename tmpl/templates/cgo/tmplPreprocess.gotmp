@@ -2,7 +2,6 @@ package main
 
 import "C"
 import (
-	"encoding/binary"
 	"encoding/json"
 	"unsafe"
 )
@@ -12,14 +11,13 @@ import (
 /* CODE */
 
 func writeBytes(dst unsafe.Pointer, dstLen uintptr, data []byte) uintptr {
-	needed := 4 + len(data)
-	if dst == nil || dstLen < uintptr(needed) {
+	needed := len(data)
+	if dst == nil || int(dstLen) < needed {
 		return uintptr(needed)
 	}
 
 	buf := unsafe.Slice((*byte)(dst), int(dstLen))
-	binary.LittleEndian.PutUint32(buf[:4], uint32(len(data)))
-	copy(buf[4:], data)
+	copy(buf, data)
 	return uintptr(needed)
 }
 
@@ -28,14 +26,14 @@ func PluginWrapper(dst uintptr, dstLen uintptr, fuzzJson *byte, jsonLen int, /* 
 	jsonSlice := unsafe.Slice(fuzzJson, jsonLen)
 	fuzz := new(fuzzTypes.Fuzz)
 	if err := json.Unmarshal(jsonSlice, fuzz); err != nil {
-		return uintptr(-1)
+		return ^uintptr(0)
 	}
 
 	newFuzz := /* FUN_NAME */(fuzz, /* ACTUAL PARAMETERS */)
 
 	newFuzzJson, err := json.Marshal(newFuzz)
 	if err != nil {
-		return uintptr(-1)
+		return ^uintptr(0)
 	}
 	return writeBytes(unsafe.Pointer(dst), dstLen, newFuzzJson)
 }

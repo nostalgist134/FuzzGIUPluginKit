@@ -9,19 +9,23 @@ import (
 
 /* CODE */
 
-func PluginWrapper(/* FORMAL PARAMETERS */) uintptr {
+func PluginWrapper(/* FORMAL PARAMETERS */) ([]byte, error) {
     reqJson = args[0].([]byte)
+    req := new(fuzzTypes.Req)
+    err := json.Unmarshal(reqJson, req)
+    if err != nil {
+        return nil, err
+    }
+
     respJson := args[1].([]byte)
-	req := new(fuzzTypes.Req)
 	resp := new(fuzzTypes.Resp)
-	json.Unmarshal(reqJson, req)
-	json.Unmarshal(respJson, resp)
+	err = json.Unmarshal(respJson, resp)
+	if err != nil {
+	    return nil, err
+	}
+
 	reaction := /* FUN_NAME */(req, resp, /* ACTUAL PARAMETERS */)
-	reactionJson, _ := json.Marshal(reaction)
-	ret := make([]byte, len(reactionJson)+4)
-	binary.LittleEndian.PutUint32(ret[0:4], uint32(len(reactionJson)))
-	copy(ret[4:], reactionJson)
-	return uintptr(unsafe.Pointer(&ret[0]))
+	return json.Marshal(reaction)
 }
 
 func main() {}

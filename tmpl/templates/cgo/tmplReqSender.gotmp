@@ -2,7 +2,6 @@ package main
 
 import "C"
 import (
-	"encoding/binary"
 	"encoding/json"
 	"unsafe"
 )
@@ -17,30 +16,29 @@ func PluginWrapper(dst *byte, dstLen int, sendMetaJson *byte, sendMetaJsonLen in
 	sendMetaJsonSlice := unsafe.Slice(sendMetaJson, sendMetaJsonLen)
 	sendMeta := new(fuzzTypes.SendMeta)
 	if err := json.Unmarshal(sendMetaJsonSlice, sendMeta); err != nil {
-		return uintptr(-1)
+		return ^uintptr(0)
 	}
 
 	// 调用核心逻辑
-	resp := /* FUN_NAME */(sendMeta, /* ACTUAL PARAMETERS */)
+	resp := /* FUN_NAME */(sendMeta)
 
 	// 序列化
 	respJson, err := json.Marshal(resp)
 	if err != nil {
-	    return uintptr(-1)
+	    return ^uintptr(0)
 	}
 
 	// 计算需要的大小 (4字节长度 + 数据)
-	needed := 4 + len(respJson)
+	needed := len(respJson)
 
 	// 如果调用方给的缓冲区不足，直接返回需要的大小
-	if outBuf == nil || outBufLen < needed {
+	if dst == nil || dstLen < needed {
 		return uintptr(needed)
 	}
 
 	// 写入到调用方提供的缓冲区
-	buf := unsafe.Slice(outBuf, outBufLen)
-	binary.LittleEndian.PutUint32(buf[0:4], uint32(len(respJson)))
-	copy(buf[4:], respJson)
+	buf := unsafe.Slice(dst, dstLen)
+	copy(buf, respJson)
 
 	// 返回实际写入的大小
 	return uintptr(needed)

@@ -10,7 +10,7 @@ import (
 
 /* CODE */
 
-func PluginWrapper( /* FORMAL PARAMETERS */ ) uintptr {
+func PluginWrapper( /* FORMAL PARAMETERS */ ) ([]byte, error) {
 	sSlice := /* FUN_NAME */( /* ACTUAL PARAMETERS */ )
 	buffer := bytes.Buffer{}
 	binary.Write(&buffer, binary.LittleEndian, int32(len(sSlice))) // string切片的长度
@@ -18,7 +18,7 @@ func PluginWrapper( /* FORMAL PARAMETERS */ ) uintptr {
 		binary.Write(&buffer, binary.LittleEndian, int32(len(s)))
 		buffer.WriteString(s)
 	}
-	return uintptr(unsafe.Pointer(&buffer.Bytes()[0]))
+	return buffer.Bytes(), nil
 }
 
 func main() {}

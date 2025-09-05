@@ -2,7 +2,6 @@ package main
 
 import "C"
 import (
-	"encoding/binary"
 	"encoding/json"
 	"unsafe"
 )
@@ -22,14 +21,14 @@ func PluginWrapper(
 	reqJsonSlice := unsafe.Slice(reqJson, reqJsonLen)
 	req := new(fuzzTypes.Req)
 	if err := json.Unmarshal(reqJsonSlice, req); err != nil {
-		return uintptr(-1)
+		return ^uintptr(0)
 	}
 
 	// 解析响应
 	respJsonSlice := unsafe.Slice(respJson, respJsonLen)
 	resp := new(fuzzTypes.Resp)
 	if err := json.Unmarshal(respJsonSlice, resp); err != nil {
-		return uintptr(-1)
+		return ^uintptr(0)
 	}
 
 	// 执行核心逻辑
@@ -38,21 +37,20 @@ func PluginWrapper(
 	// 序列化结果
 	reactionJson, err := json.Marshal(reaction)
 	if err != nil {
-	    return uintptr(-1)
+	    return ^uintptr(0)
 	}
 
 	// 计算需要的空间
-	needed := 4 + len(reactionJson)
+	needed := len(reactionJson)
 
 	// 如果缓冲区不足或为空，直接返回所需长度
-	if outBuf == nil || outBufLen < needed {
+	if dst == nil || dstLen < needed {
 		return uintptr(needed)
 	}
 
 	// 写入结果
-	buf := unsafe.Slice(outBuf, outBufLen)
-	binary.LittleEndian.PutUint32(buf[0:4], uint32(len(reactionJson)))
-	copy(buf[4:], reactionJson)
+	buf := unsafe.Slice(dst, dstLen)
+	copy(buf, reactionJson)
 
 	return uintptr(needed)
 }
