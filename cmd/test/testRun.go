@@ -140,6 +140,7 @@ func callPluginExpr(callExpr string, pluginPath string) {
 	pName := filepath.Base(pluginPath)
 	pName = pName[:strings.LastIndex(pName, ".")]
 	pName1 := filepath.Join("../../", pName)
+
 	// 切换到插件所在目录
 	cwd := env.GetCwd()
 	err := os.Chdir(filepath.Dir(pluginPath))
@@ -147,17 +148,20 @@ func callPluginExpr(callExpr string, pluginPath string) {
 	defer os.Chdir(cwd)
 
 	plugins := FGPlugin.ParsePluginsStr(callExpr)
+
 	inf, err := common.GetPluginInfo(pluginPath)
 	common.FailExit(err)
 	fd := convention.BuildFd(inf)
-	preDefinedArgs := convention.GetPreDefinedArgs(inf.Type)
+	preDefinedArgs := convention.GetReservedArgs(inf.Type)
 	// 测试插件
 	for i, p := range plugins {
 		fmt.Println(strings.Repeat("-", 25))
+
 		argListCmp := p.Args
 		if preDefinedArgs != nil {
 			argListCmp = append(preDefinedArgs, argListCmp...)
 		}
+
 		// 穿越前的路径用于输出
 		p.Name = pName
 		if !cmpParaTypes(argListCmp, fd.Params) {
@@ -166,9 +170,11 @@ func callPluginExpr(callExpr string, pluginPath string) {
 			continue
 		}
 		fmt.Printf("test on: %v\n", p)
+
 		// 穿越后的路径用于调用
 		p.Name = pName1
 		result := callPluginByType(inf.Type, p)
+
 		// 输出到文件
 		p.Name = pName
 		recordTest(p, result, true)
@@ -181,39 +187,49 @@ func callPluginTestFile(filePath string, pluginPath string) {
 	pName := filepath.Base(pluginPath)
 	pName = pName[:strings.LastIndex(pName, ".")]
 	pName = filepath.Join("../../", pName)
+
 	// 获取插件信息
 	inf, err := common.GetPluginInfo(pluginPath)
 	common.FailExit(err)
 	fd := convention.BuildFd(inf)
-	preDefinedArgs := convention.GetPreDefinedArgs(inf.Type)
+
+	preReservedArgs := convention.GetReservedArgs(inf.Type)
+
 	// 加载测试用例文件
 	var tests []Test
 	file, err := os.Open(filePath)
 	common.FailExit(err)
+
 	decoder := json.NewDecoder(file)
 	// 使用json.Number类型表示数字，从而下面可以自动转换（json.Marshal默认对所有数字都是float64）
 	decoder.UseNumber()
 	err = decoder.Decode(&tests)
 	common.FailExit(err)
-	preNum := len(preDefinedArgs)
+
+	preNum := len(preReservedArgs)
+
 	for i, test := range tests {
 		fmt.Println(strings.Repeat("-", 25))
+
 		convertFail := false
+
 		// 将map转为预定义参数对应的类型
-		for j := 0; j < len(preDefinedArgs); j++ {
+		for j := 0; j < len(preReservedArgs); j++ {
 			b, _ := json.Marshal(test.Args[j])
-			err = json.Unmarshal(b, preDefinedArgs[j])
+			err = json.Unmarshal(b, preReservedArgs[j])
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "test#%d argument#%d conversion error: %v. skip\n", i, j, err)
 				convertFail = true
 				break
 			}
-			test.Args[j] = preDefinedArgs[j]
+			test.Args[j] = preReservedArgs[j]
 		}
+
 		if convertFail {
 			recordTest(test, nil, false)
 			continue
 		}
+
 		// 将数字参数转换为正确的类型
 		for j, a := range test.Args {
 			switch v := a.(type) {
@@ -227,10 +243,12 @@ func callPluginTestFile(filePath string, pluginPath string) {
 				}
 			}
 		}
+
 		if !cmpParaTypes(test.Args, fd.Params) {
 			fmt.Fprintf(os.Stderr, "test#%d arguments does not match plugin's, skip\n", i)
 			continue
 		}
+
 		// 获取期望值（如果有）
 		var expect any = nil
 		if stru := convention.GetStruct(fd.RetType); test.Expect != nil && stru != nil {
@@ -247,14 +265,17 @@ func callPluginTestFile(filePath string, pluginPath string) {
 			// 若期望为基本类型，则不需要二次转化
 			expect = test.Expect
 		}
+
 		// 分离预定义参数，调用插件
 		p := fuzzTypes.Plugin{
 			Name: pName,
 			Args: test.Args[preNum:],
 		}
+
 		fmt.Println("test on: ", test)
-		result := callPluginByType(inf.Type, p, preDefinedArgs...)
+		result := callPluginByType(inf.Type, p, preReservedArgs...)
 		fmt.Println("result: ", result)
+
 		// 比较返回值与期望值
 		passed := true
 		if expect != nil {
@@ -266,6 +287,7 @@ func callPluginTestFile(filePath string, pluginPath string) {
 				fmt.Println("failed")
 			}
 		}
+
 		recordTest(test, result, passed)
 	}
 }

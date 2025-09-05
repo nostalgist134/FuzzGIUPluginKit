@@ -143,7 +143,8 @@ func GetParamStrings(os, pluginType string, params []Param) (string, string) {
 	return formalParams.String(), actualParams.String()
 }
 
-func GetPreDefinedArgs(pType string) []any {
+// GetReservedArgs 根据插件类型返回预留参数
+func GetReservedArgs(pType string) []any {
 	switch pType {
 	case PluginTypes[IndPTypeReqSender]:
 		return []any{new(fuzzTypes.SendMeta)}

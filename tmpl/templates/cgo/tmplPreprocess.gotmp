@@ -28,14 +28,14 @@ func PluginWrapper(dst uintptr, dstLen uintptr, fuzzJson *byte, jsonLen int, /* 
 	jsonSlice := unsafe.Slice(fuzzJson, jsonLen)
 	fuzz := new(fuzzTypes.Fuzz)
 	if err := json.Unmarshal(jsonSlice, fuzz); err != nil {
-		return -1
+		return uintptr(-1)
 	}
 
 	newFuzz := /* FUN_NAME */(fuzz, /* ACTUAL PARAMETERS */)
 
 	newFuzzJson, err := json.Marshal(newFuzz)
 	if err != nil {
-		return -1
+		return uintptr(-1)
 	}
 	return writeBytes(unsafe.Pointer(dst), dstLen, newFuzzJson)
 }

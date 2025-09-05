@@ -17,7 +17,7 @@ func PluginWrapper(dst *byte, dstLen int, sendMetaJson *byte, sendMetaJsonLen in
 	sendMetaJsonSlice := unsafe.Slice(sendMetaJson, sendMetaJsonLen)
 	sendMeta := new(fuzzTypes.SendMeta)
 	if err := json.Unmarshal(sendMetaJsonSlice, sendMeta); err != nil {
-		return -1
+		return uintptr(-1)
 	}
 
 	// 调用核心逻辑
@@ -26,7 +26,7 @@ func PluginWrapper(dst *byte, dstLen int, sendMetaJson *byte, sendMetaJsonLen in
 	// 序列化
 	respJson, err := json.Marshal(resp)
 	if err != nil {
-	    return -1
+	    return uintptr(-1)
 	}
 
 	// 计算需要的大小 (4字节长度 + 数据)

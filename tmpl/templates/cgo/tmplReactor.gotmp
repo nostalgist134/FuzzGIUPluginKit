@@ -22,14 +22,14 @@ func PluginWrapper(
 	reqJsonSlice := unsafe.Slice(reqJson, reqJsonLen)
 	req := new(fuzzTypes.Req)
 	if err := json.Unmarshal(reqJsonSlice, req); err != nil {
-		return -1
+		return uintptr(-1)
 	}
 
 	// 解析响应
 	respJsonSlice := unsafe.Slice(respJson, respJsonLen)
 	resp := new(fuzzTypes.Resp)
 	if err := json.Unmarshal(respJsonSlice, resp); err != nil {
-		return -1
+		return uintptr(-1)
 	}
 
 	// 执行核心逻辑
@@ -38,7 +38,7 @@ func PluginWrapper(
 	// 序列化结果
 	reactionJson, err := json.Marshal(reaction)
 	if err != nil {
-	    return -1
+	    return uintptr(-1)
 	}
 
 	// 计算需要的空间

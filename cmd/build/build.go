@@ -77,6 +77,7 @@ func buildSharedLib(goPath string, src string, out string, env1 env.Env, funInfo
 			common.FailExit(err)
 		}
 	}
+
 	// go fmt
 	fmt.Printf("> %s fmt wrapped.go\n", goPath)
 	c = exec.Command(goPath, "fmt", "wrapped.go")
@@ -84,8 +85,10 @@ func buildSharedLib(goPath string, src string, out string, env1 env.Env, funInfo
 	if len(output) > 0 {
 		fmt.Print(string(output))
 	}
+
 	// go build ...
 	buildArgs := env.GetBuildArgs(env1, out, src)
+
 	fmt.Printf("> %s ", goPath)
 	for _, a := range buildArgs {
 		if strings.Index(a, "-ldflags=") == 0 {
@@ -95,12 +98,15 @@ func buildSharedLib(goPath string, src string, out string, env1 env.Env, funInfo
 		fmt.Printf("%s ", a)
 	}
 	os.Stdout.Write([]byte{'\n'})
+
+	common.SetExitDefer(func() { os.Remove("wrapped.go") })
 	c = exec.Command(goPath, buildArgs...)
 	output, err = c.CombinedOutput()
 	if len(output) > 0 {
 		fmt.Print(string(output))
 	}
 	common.FailExit(err)
+
 	out, _ = filepath.Abs(out)
 	fmt.Printf("successfully built %s, parameters: %v\n", out, funInfo.Params)
 	return out
@@ -113,16 +119,19 @@ func runCmdBuild(cmd *cobra.Command, _ []string) {
 		os.Chdir(cwd)
 	})
 	defer os.Chdir(cwd)
+
 	goPath, _ := cmd.Flags().GetString("go-path")
 	if goPath == "" {
 		goPath = "go"
 	}
+
 	// 检查构建环境
 	env1 := env.Check(goPath)
 	if env1.OkToBuild == false {
 		common.FailExit("environment check failed")
 	}
 	fmt.Printf("currently build under %s, using go version %s\n", env1.OS, env1.GoVersion)
+
 	// 检查路径
 	path, err := cmd.Flags().GetString("path")
 	common.FailExit(err)
@@ -135,6 +144,7 @@ func runCmdBuild(cmd *cobra.Command, _ []string) {
 	if stat.IsDir() {
 		pluginFile = filepath.Join(pluginFile, "main.go")
 	}
+
 	// 寻找插件函数
 	var fd *convention.FuncDecl
 	var paraMeta []convention.ParaMeta
@@ -152,6 +162,7 @@ func runCmdBuild(cmd *cobra.Command, _ []string) {
 	if os.IsNotExist(err) || fd == nil {
 		common.FailExit("cannot find supported plugin function")
 	}
+
 	// 检查插件函数是否符合约定
 	fmt.Printf("plugin type - %s\n", pType)
 	ok, msg := convention.CheckPluginFun(pType, *fd)
@@ -161,40 +172,50 @@ func runCmdBuild(cmd *cobra.Command, _ []string) {
 
 	wrapped, err := tmpl.GetTemplate(env1.OS, pType)
 	common.FailExit(err)
+
 	// 替换模板中的函数名占位符
 	wrapped = tmpl.Replace(wrapped, tmpl.PHFunName, pFun)
+
 	// 替换模板中去重的import语句
 	tempImports, _ := goParser.GetImports(wrapped, true)
 	srcImports, _ := goParser.GetImports(pluginFile)
 	eImports := exclusiveImports(srcImports, tempImports)
 	wrapped = tmpl.Replace(wrapped, tmpl.PHCustomImports, getImpStr(eImports))
+
 	// 替换形参与实参列表
 	formal, actual := convention.GetParamStrings(env1.OS, pType, fd.Params)
 	wrapped = tmpl.Replace(wrapped, tmpl.PHFormalPara, formal)
 	wrapped = tmpl.Replace(wrapped, tmpl.PHActualPara, actual)
+
 	// 将code占位符替换为源码
 	code, err := goParser.GetCode(pluginFile)
 	common.FailExit(err)
 	wrapped = tmpl.Replace(wrapped, tmpl.PHCode, code)
+
 	// 输出文件名
 	out, _ := cmd.Flags().GetString("out")
 	if out == "" {
 		out = "FuzzGIU" + convention.GetPluginFunName(pType) + env1.BinSuffix
 	}
 	fmt.Printf("output file: %s\n", out)
+
 	// 根据需要生成PluginInfo函数
 	if genPi, _ := cmd.Flags().GetBool("info"); genPi {
 		usageFile, _ := cmd.Flags().GetString("usage-file")
 		wrapped += "\n" + convention.GenPlugInfoFun(filepath.Base(out), pType, env1.GoVersion, usageFile, paraMeta)
 	}
+
 	// 进入项目目录，创建并写入文件
 	err = os.Chdir(filepath.Dir(pluginFile))
 	common.FailExit(err)
+
 	f, err := os.Create("wrapped.go")
 	common.FailExit(err)
 	defer f.Close()
+
 	_, err = f.WriteString(wrapped)
 	common.FailExit(err)
+
 	// 编译文件
 	buildSharedLib(goPath, f.Name(), out, env1, fd)
 	// 决定是否保留中间文件
