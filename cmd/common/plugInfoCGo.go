@@ -58,7 +58,7 @@ func GetPluginInfo(pluginFile string) (*convention.PluginInfo, error) {
 	if int(ret) > needed {
 		buffer = append(buffer, make([]byte, int(ret)-needed)...)
 		_, _, err = pi.Call(uintptr(unsafe.Pointer(&buffer[0])), ret)
-		if err != nil {
+		if err != nil && (!errors.As(err, &errno) || errno != 0) {
 			return nil, err
 		}
 	}
