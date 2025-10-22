@@ -2,6 +2,7 @@ package convention
 
 import (
 	"github.com/nostalgist134/FuzzGIU/components/fuzzTypes"
+	"github.com/nostalgist134/FuzzGIU/components/output/outputFlag"
 	"time"
 )
 
@@ -48,7 +49,7 @@ var fullReq = &fuzzTypes.Req{
 		Version:    "2.0",
 		ForceHttps: false,
 	},
-	Data: "user=GIU&password=GIU12345",
+	Data: []byte("user=GIU&password=GIU12345"),
 }
 
 var fullResp = &fuzzTypes.Resp{
@@ -86,7 +87,6 @@ var fullFuzz = &fuzzTypes.Fuzz{
 	Preprocess: struct {
 		PlTemp        map[string]fuzzTypes.PayloadTemp `json:"pl_temp,omitempty"`
 		Preprocessors []fuzzTypes.Plugin               `json:"preprocessors,omitempty"` // 使用的自定义预处理器
-		Mode          string                           `json:"mode,omitempty"`          // 出现多个payload关键字时处理的模式
 		ReqTemplate   fuzzTypes.Req                    `json:"request_tmpl,omitempty"`  // 含有fuzz关键字的请求模板
 	}{
 		PlTemp: map[string]fuzzTypes.PayloadTemp{
@@ -133,13 +133,13 @@ var fullFuzz = &fuzzTypes.Fuzz{
 		Timeout:             3,
 	},
 	React: struct {
-		Reactor          fuzzTypes.Plugin         `json:"reactors,omitempty"`
-		OutSettings      fuzzTypes.OutputSettings `json:"output_settings,omitempty"`
-		Filter           fuzzTypes.Match          `json:"filter,omitempty"`
-		Matcher          fuzzTypes.Match          `json:"matcher,omitempty"`
+		Reactor          fuzzTypes.Plugin `json:"reactor,omitempty"`      // 响应处理插件
+		Filter           fuzzTypes.Match  `json:"filter,omitempty"`       // 过滤
+		Matcher          fuzzTypes.Match  `json:"matcher,omitempty"`      // 匹配
+		IgnoreError      bool             `json:"ignore_error,omitempty"` // 是否忽略发送过程中出现的错误
 		RecursionControl struct {
-			RecursionDepth    int               `json:"recursion_depth,omitempty"`
-			MaxRecursionDepth int               `json:"max_recursion_depth,omitempty"`
+			RecursionDepth    int               `json:"recursion_depth,omitempty"`     // 当前递归深度
+			MaxRecursionDepth int               `json:"max_recursion_depth,omitempty"` // 最大递归深度
 			Keyword           string            `json:"keyword,omitempty"`
 			StatCodes         []fuzzTypes.Range `json:"stat_codes,omitempty"`
 			Regex             string            `json:"regex,omitempty"`
@@ -147,13 +147,6 @@ var fullFuzz = &fuzzTypes.Fuzz{
 		} `json:"recursion_control,omitempty"`
 	}{
 		Reactor: fuzzTypes.Plugin{Name: "test", Args: []any{1, 2, 3}},
-		OutSettings: fuzzTypes.OutputSettings{
-			Verbosity:    3,
-			IgnoreError:  false,
-			OutputFormat: "json",
-			OutputFile:   "test.json",
-			NativeStdout: false,
-		},
 		Filter:  fullFilter,
 		Matcher: fullFilter,
 		RecursionControl: struct {
@@ -172,14 +165,22 @@ var fullFuzz = &fuzzTypes.Fuzz{
 			Splitter:          "/",
 		},
 	},
-	Misc: struct {
-		PoolSize         int           `json:"pool_size,omitempty"`
-		Delay            int           `json:"delay,omitempty"`
-		DelayGranularity time.Duration `json:"delay_granularity,omitempty"`
+	Control: struct {
+		PoolSize   int                     `json:"pool_size,omitempty"`   // 使用的协程池大小
+		Delay      time.Duration           `json:"delay,omitempty"`       // 每次提交任务前的延迟
+		OutSetting fuzzTypes.OutputSetting `json:"out_setting,omitempty"` // 输出设置
+		IterCtrl   fuzzTypes.Iteration     `json:"iter_ctrl,omitempty"`   // 迭代控制
 	}{
-		PoolSize:         64,
-		Delay:            50,
-		DelayGranularity: time.Millisecond,
+		PoolSize: 64,
+		Delay:    50,
+		OutSetting: fuzzTypes.OutputSetting{
+			Verbosity:    3,
+			OutputFile:   "nishigiu.json",
+			OutputFormat: "json",
+			HttpURL:      "http://www.nishigiu.com/submit",
+			ChanSize:     10,
+			ToWhere:      outputFlag.OutToChan | outputFlag.OutToStdout,
+		},
 	},
 }
 
