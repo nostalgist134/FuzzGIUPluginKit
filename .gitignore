@@ -3,3 +3,6 @@
 *.dll
 *.txt
 .idea
+*.ps1
+*.zip
+.gitignore
