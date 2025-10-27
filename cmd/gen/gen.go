@@ -111,6 +111,7 @@ func createGoProj(path string, goVer string, code string, noNet bool) string {
 	pathExist, pathNonExist, _ := splitExistPath(path)
 	cwd := env.GetCwd()
 	defer os.Chdir(cwd)
+
 	// 如果创建失败，清理残余文件
 	common.SetExitDefer(func() {
 		defer os.Chdir(cwd)
@@ -130,12 +131,14 @@ func createGoProj(path string, goVer string, code string, noNet bool) string {
 		}
 	})
 	defer common.ClearExitDefer()
+
 	// 尝试创建并进入项目目录
 	err := os.MkdirAll(path, 0755)
 	common.FailExit(err)
 	err = os.Chdir(path)
 	common.FailExit(err)
 	moduleName := filepath.Base(path)
+
 	// 创建go.mod文件
 	fmt.Printf("go.mod: module - %s, go version - %s\n", moduleName, goVer)
 	goMod := fmt.Sprintf("module %s\ngo %s\n", moduleName, goVer)
@@ -145,6 +148,7 @@ func createGoProj(path string, goVer string, code string, noNet bool) string {
 	filesCreated = append(filesCreated, f)
 	_, err = f.WriteString(goMod)
 	common.FailExit(err)
+
 	// 创建components及fuzzTypes.go文件
 	fmt.Printf("fuzzTypes.go: ")
 	err = os.MkdirAll("./components/fuzzTypes", 0755)
@@ -153,12 +157,14 @@ func createGoProj(path string, goVer string, code string, noNet bool) string {
 	common.FailExit(err)
 	filesCreated = append(filesCreated, ft)
 	defer ft.Close()
+
 	// 尝试从github上获取fuzzTypes.go，如果失败再读取模板文件
 	s := ""
 	contentUrl := "https://raw.githubusercontent.com/nostalgist134/FuzzGIU/main/components/fuzzTypes/fuzzTypes.go"
 	if !noNet {
 		s, err = getContentHttp(contentUrl)
 	}
+
 	if err != nil || s == "" {
 		if err != nil {
 			fmt.Printf("get from net failed: %v, ", err)
@@ -171,9 +177,11 @@ func createGoProj(path string, goVer string, code string, noNet bool) string {
 	}
 	_, err = ft.WriteString(s)
 	common.FailExit(err)
+
 	// 创建并写入helper文件
 	err = addHelpers("./components/", moduleName)
 	common.FailExit(err)
+
 	// 创建main.go文件
 	fmt.Printf("creating main.go")
 	mainGo, err := os.Create("main.go")
@@ -181,6 +189,7 @@ func createGoProj(path string, goVer string, code string, noNet bool) string {
 	defer mainGo.Close()
 	filesCreated = append(filesCreated, mainGo)
 	fmt.Println(" success")
+
 	// 将模板中的模块名替换后，写入main.go
 	code = tmpl.Replace(code, tmpl.PHModuleName, moduleName)
 	code = strings.TrimPrefix(code, "\n")
@@ -205,7 +214,7 @@ func runCmdGen(cmd *cobra.Command, _ []string) {
 	if path == "" {
 		path = "."
 	}
-	code := convention.GenCodeByType(pType)
+	code := convention.GenCodePType(pType)
 	noNet, _ := cmd.Flags().GetBool("no-net")
 	projPath := createGoProj(path, goVer, code, noNet)
 	fmt.Printf("successfully create go project at %s\n", projPath)

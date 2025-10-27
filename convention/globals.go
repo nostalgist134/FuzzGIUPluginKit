@@ -7,37 +7,48 @@ import (
 )
 
 const (
-	IndPTypePlProc    = 0
-	IndPTypeReact     = 1
-	IndPTypePlGen     = 2
-	IndPTypeReqSender = 3
-	IndPTypePreproc   = 4
+	IndPTypePlProc        = 0
+	IndPTypeReact         = 1
+	IndPTypePlGen         = 2
+	IndPTypeReqSender     = 3
+	IndPTypePreproc       = 4
+	IndPTypeIterator      = 5
+	IndPTypeIteratorMinor = 0
 )
 
-var PluginFunNames = []string{"PayloadProcessor", "React", "PayloadGenerator", "SendRequest", "Preprocess"}
-var PluginTypes = []string{"payloadProc", "reactor", "payloadGen", "reqSender", "preprocess"}
+var PluginFunNames = []string{"PayloadProcessor", "React", "PayloadGenerator", "DoRequest", "Preprocess", "IterIndex"}
+var PluginTypes = []string{"payloadProc", "reactor", "payloadGen", "reqSender", "preprocess", "iterator"}
+var PluginMinorFun = []string{"IterLen"}
 
 // FuncDecls 每种插件的约定函数原型
 var FuncDecls = map[string]FuncDecl{
-	PluginTypes[0]: {
+	PluginTypes[IndPTypePlProc]: {
 		Params:  []Param{{Name: "payload", Type: "string"}},
 		RetType: "string",
 	},
-	PluginTypes[1]: {
+	PluginTypes[IndPTypeReact]: {
 		Params:  []Param{{Name: "req", Type: "*fuzzTypes.Req"}, {Name: "resp", Type: "*fuzzTypes.Resp"}},
 		RetType: "*fuzzTypes.Reaction",
 	},
-	PluginTypes[2]: {
+	PluginTypes[IndPTypePlGen]: {
 		Params:  []Param{},
 		RetType: "[]string",
 	},
-	PluginTypes[3]: {
-		Params:  []Param{{Name: "sendMeta", Type: "*fuzzTypes.SendMeta"}},
+	PluginTypes[IndPTypeReqSender]: {
+		Params:  []Param{{Name: "requestCtx", Type: "*fuzzTypes.RequestCtx"}},
 		RetType: "*fuzzTypes.Resp",
 	},
-	PluginTypes[4]: {
+	PluginTypes[IndPTypePreproc]: {
 		Params:  []Param{{Name: "fuzz", Type: "*fuzzTypes.Fuzz"}},
 		RetType: "*fuzzTypes.Fuzz",
+	},
+	PluginTypes[IndPTypeIterator]: {
+		Params:  []Param{{Name: "lengths", Type: "[]int"}, {"ind", "int"}},
+		RetType: "[]int",
+	},
+	PluginMinorFun[IndPTypeIteratorMinor]: {
+		Params:  []Param{{Name: "lengths", Type: "[]int"}},
+		RetType: "int",
 	},
 }
 
@@ -45,9 +56,14 @@ var fullReq = &fuzzTypes.Req{
 	URL: "https://test.com",
 	HttpSpec: fuzzTypes.HTTPSpec{
 		Method:     "POST",
-		Headers:    []string{"Hello: 1", "User-Agent: milaogiu browser(114.54)", "Giu: 12345"},
+		Headers:    []string{"Hello: FUZZGIU", "User-Agent: milaogiu browser(114.54)", "Giu: 12345"},
 		Version:    "2.0",
 		ForceHttps: false,
+	},
+	Fields: []fuzzTypes.Field{
+		{"NISHIGIU", "WOSHIGIU"},
+		{"MILAOGIU", "NISHIGIU"},
+		{"FUZZ", "NISHIGIU"},
 	},
 	Data: []byte("user=GIU&password=GIU12345"),
 }
@@ -63,7 +79,7 @@ var fullResp = &fuzzTypes.Resp{
 	ErrMsg:            "test error",
 }
 
-var fullSendMeta = &fuzzTypes.SendMeta{
+var fullRequestCtx = &fuzzTypes.RequestCtx{
 	Request:             fullReq,
 	Proxy:               "http://127.0.0.1:8080",
 	HttpFollowRedirects: true,

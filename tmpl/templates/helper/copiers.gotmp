@@ -5,16 +5,16 @@ import (
 	"/* MODULE_NAME *//components/fuzzTypes"
 )
 
-// CopyFuzz 复制fuzz结构（PlList不复制）
+// CopyFuzz 复制fuzz结构
 func CopyFuzz(f *fuzzTypes.Fuzz) *fuzzTypes.Fuzz {
 	if f == nil {
 		return nil
 	}
+
 	newFuzz := new(fuzzTypes.Fuzz)
 
 	// 拷贝 Preprocess
 	newFuzz.Preprocess.Preprocessors = f.Preprocess.Preprocessors
-	newFuzz.Preprocess.Mode = f.Preprocess.Mode
 	newFuzz.Preprocess.PlTemp = make(map[string]fuzzTypes.PayloadTemp)
 	for k, v := range f.Preprocess.PlTemp {
 		newFuzz.Preprocess.PlTemp[k] = fuzzTypes.PayloadTemp{
@@ -44,10 +44,10 @@ func CopyFuzz(f *fuzzTypes.Fuzz) *fuzzTypes.Fuzz {
 	newFuzz.React.Matcher.Code = append([]fuzzTypes.Range{}, f.React.Matcher.Code...)
 	newFuzz.React.RecursionControl = f.React.RecursionControl
 	newFuzz.React.RecursionControl.StatCodes = append([]fuzzTypes.Range{}, f.React.RecursionControl.StatCodes...)
-	newFuzz.React.OutSettings = f.React.OutSettings
+	newFuzz.Control.OutSetting = f.Control.OutSetting
 
-	// 拷贝 Misc
-	newFuzz.Misc = f.Misc
+	// 拷贝 Control
+	newFuzz.Control = f.Control
 
 	return newFuzz
 }
@@ -66,15 +66,15 @@ func CopyReq(r *fuzzTypes.Req) *fuzzTypes.Req {
 	return newReq
 }
 
-// CopySendMeta 复制sendMeta结构
-func CopySendMeta(m *fuzzTypes.SendMeta) *fuzzTypes.SendMeta {
-	if m == nil {
+// CopyRequestCtx 复制RequestCtx结构
+func CopyRequestCtx(c *fuzzTypes.RequestCtx) *fuzzTypes.RequestCtx {
+	if c == nil {
 		return nil
 	}
-	newMeta := new(fuzzTypes.SendMeta)
-	*newMeta = *m
-	newMeta.Request = CopyReq(m.Request)
-	return newMeta
+	newC := new(fuzzTypes.RequestCtx)
+	*newC = *c
+	newC.Request = CopyReq(m.Request)
+	return newC
 }
 
 // CopyResp 复制Resp结构

@@ -13,6 +13,7 @@ const (
 	PHActualPara    = "/* ACTUAL PARAMETERS */"
 	PHPlugInfo      = "/* PLUGIN_INFO */"
 	PHFunName       = "/* FUN_NAME */"
+	PHMinorFunName  = "/* MINOR_FUN_NAME */"
 	PHModuleName    = "/* MODULE_NAME */"
 )
 

@@ -10,14 +10,14 @@ import (
 /* CODE */
 
 func PluginWrapper(/* FORMAL PARAMETERS */) ([]byte, error) {
-	sendMetaJson := args[0].([]byte)
-	sendMeta := new(fuzzTypes.SendMeta)
-	err := json.Unmarshal(sendMetaJson, sendMeta)
+	requestCtxJson := args[0].([]byte)
+	requestCtx := new(fuzzTypes.RequestCtx)
+	err := json.Unmarshal(requestCtxJson, requestCtx)
 	if err != nil {
 	    return nil, err
 	}
 
-	resp := /* FUN_NAME */(sendMeta)
+	resp := /* FUN_NAME */(RequestCtx)
 	return json.Marshal(resp)
 }
 

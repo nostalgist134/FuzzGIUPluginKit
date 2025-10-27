@@ -40,25 +40,38 @@ func GetFuncDecl(pluginType string) FuncDecl {
 	return FuncDecl{}
 }
 
-// CheckPluginFun 判断插件函数的函数声明是否符合规范
-func CheckPluginFun(pluginType string, fd FuncDecl) (bool, string) {
-	correctFd := GetFuncDecl(pluginType)
-	funName := GetPluginFunName(pluginType)
-	if correctFd.RetType != fd.RetType {
-		return false, fmt.Sprintf("function %s return type incorrect, your return - %s, correct - %s",
-			funName, fd.RetType, correctFd.RetType)
-	}
+func compareFuncDecl(fd FuncDecl, correctFd FuncDecl) (equal bool, reason string) {
 	if len(fd.Params) < len(correctFd.Params) {
-		return false, fmt.Sprintf("function %s argument not enough, at least %d arguments needed",
-			funName, len(correctFd.Params))
+		equal = false
+		reason = fmt.Sprintf("argument count not enough, at lease %d arguments needed", len(correctFd.Params))
+		return
 	}
 	for i, p := range correctFd.Params {
 		if p.Name != fd.Params[i].Name || p.Type != fd.Params[i].Type {
-			return false, fmt.Sprintf(`function %s param %d incorrect, your param: "%s %s". correct: "%s %s"`,
-				funName, i, fd.Params[i].Name, fd.Params[i].Type, p.Name, p.Type)
+			equal, reason = false, fmt.Sprintf(`param %d incorrect, given: "%s %s", wanted: "%s %s"`,
+				i, fd.Params[i].Name, fd.Params[i].Type, p.Name, p.Type)
+			return
 		}
 	}
-	return true, ""
+	if fd.RetType != correctFd.RetType {
+		equal, reason = false, fmt.Sprintf(`return type incorrect, given: "%s", wanted: "%s"`, fd.RetType,
+			correctFd.RetType)
+	}
+	return
+}
+
+// CheckPluginFun 判断插件函数的函数声明是否符合规范
+func CheckPluginFun(pluginType string, fd FuncDecl) (bool, string) {
+	correctFd := GetFuncDecl(pluginType)
+	return compareFuncDecl(fd, correctFd)
+}
+
+func CheckPluginMinorFunc(pType string, fd FuncDecl) (bool, string) {
+	if pType != PluginTypes[IndPTypeIterator] {
+		return true, ""
+	}
+	correctFd := FuncDecls[PluginTypes[IndPTypeIterator]]
+	return compareFuncDecl(fd, correctFd)
 }
 
 // genPluginFun 根据插件类型生成对应的插件函数
@@ -147,7 +160,7 @@ func GetParamStrings(os, pluginType string, params []Param) (string, string) {
 func GetReservedArgs(pType string) []any {
 	switch pType {
 	case PluginTypes[IndPTypeReqSender]:
-		return []any{new(fuzzTypes.SendMeta)}
+		return []any{new(fuzzTypes.RequestCtx)}
 	case PluginTypes[IndPTypePreproc]:
 		return []any{new(fuzzTypes.Fuzz)}
 	case PluginTypes[IndPTypeReact]:
@@ -183,11 +196,22 @@ func needImport(fd FuncDecl) string {
 	return ""
 }
 
-// GenCodeByType 根据插件类型生成一个完整的可通过编译的代码骨架
-func GenCodeByType(pluginType string) string {
+// GenCodePType 根据插件类型生成一个完整的可通过编译的代码骨架
+func GenCodePType(pluginType string) string {
 	fn := genPluginFun(pluginType)
 	imp := needImport(GetFuncDecl(pluginType))
 	return fmt.Sprintf("package main\n%s\n%s\n", imp, fn)
+}
+
+// DefMinorFun 次要函数，目前只有iterator插件的IterLen使用这个函数生成
+func DefMinorFun(pluginType string) string {
+	if pluginType != PluginTypes[IndPTypeIterator] {
+		return ""
+	}
+	return `func IterLen(lengths []int, /* FORMAL PARAMETERS */){
+	return -1
+}
+`
 }
 
 func GetStruct(structType string) any {
@@ -198,8 +222,8 @@ func GetStruct(structType string) any {
 		return &fuzzTypes.Req{}
 	case "*fuzzTypes.Resp":
 		return &fuzzTypes.Resp{}
-	case "*fuzzTypes.SendMeta":
-		return &fuzzTypes.SendMeta{}
+	case "*fuzzTypes.RequestCtx":
+		return &fuzzTypes.RequestCtx{}
 	case "*fuzzTypes.Reaction":
 		return &fuzzTypes.Reaction{}
 	default:
@@ -230,8 +254,8 @@ func GetFullStruct(structType string) any {
 		return fullReq
 	case "*fuzzTypes.Resp":
 		return fullResp
-	case "*fuzzTypes.SendMeta":
-		return fullSendMeta
+	case "*fuzzTypes.RequestCtx":
+		return fullRequestCtx
 	case "*fuzzTypes.Reaction":
 		return fullReaction
 	default:

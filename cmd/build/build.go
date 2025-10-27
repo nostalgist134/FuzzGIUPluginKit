@@ -1,6 +1,7 @@
 package build
 
 import (
+	"errors"
 	"fmt"
 	"github.com/nostalgist134/FuzzGIUPluginKit/cmd/common"
 	"github.com/nostalgist134/FuzzGIUPluginKit/convention"
@@ -91,8 +92,8 @@ func buildSharedLib(goPath string, src string, out string, env1 env.Env, funInfo
 
 	fmt.Printf("> %s ", goPath)
 	for _, a := range buildArgs {
-		if strings.Index(a, "-ldflags=") == 0 {
-			fmt.Printf("%s\"%s\" ", a[0:9], a[9:])
+		if len(a) > 9 && a[:9] == "-ldflags=" {
+			fmt.Printf("%s\"%s\" ", a[:9], a[9:])
 			continue
 		}
 		fmt.Printf("%s ", a)
@@ -170,11 +171,38 @@ func runCmdBuild(cmd *cobra.Command, _ []string) {
 		common.FailExit(fmt.Sprintf("plugin function check failed: %s", msg))
 	}
 
+	// 寻找次要插件函数，并检查是否遵循约定
+	var (
+		minorFuncExist bool
+		minorFun       string
+	)
+	if pType == convention.PluginTypes[convention.IndPTypeIterator] { // 目前只有iterator可能有次要函数，所以暂时先if判断了
+		var fd2 *convention.FuncDecl
+		minorFun = convention.PluginMinorFun[0]
+		fd2, _, err = goParser.FindFunction(pluginFile, minorFun)
+		if !errors.Is(err, os.ErrNotExist) {
+			common.FailExit(err)
+		} else if err != nil {
+			minorFuncExist = false
+		} else {
+			minorFuncExist = true
+			ok, msg = convention.CheckPluginMinorFunc(pType, *fd2)
+			if !ok {
+				common.FailExit(fmt.Sprintf("plugin function check failed: %s", msg))
+			}
+		}
+	}
+
 	wrapped, err := tmpl.GetTemplate(env1.OS, pType)
 	common.FailExit(err)
 
+	if pType == convention.PluginTypes[convention.IndPTypeIterator] && !minorFuncExist {
+		wrapped += "\n" + convention.DefMinorFun(pType)
+	}
+
 	// 替换模板中的函数名占位符
 	wrapped = tmpl.Replace(wrapped, tmpl.PHFunName, pFun)
+	wrapped = tmpl.Replace(wrapped, tmpl.PHMinorFunName, minorFun)
 
 	// 替换模板中去重的import语句
 	tempImports, _ := goParser.GetImports(wrapped, true)
@@ -189,6 +217,9 @@ func runCmdBuild(cmd *cobra.Command, _ []string) {
 
 	// 将code占位符替换为源码
 	code, err := goParser.GetCode(pluginFile)
+	if !minorFuncExist && pType == convention.PluginTypes[convention.IndPTypeIterator] {
+		code += ""
+	}
 	common.FailExit(err)
 	wrapped = tmpl.Replace(wrapped, tmpl.PHCode, code)
 

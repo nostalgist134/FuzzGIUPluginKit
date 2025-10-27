@@ -10,8 +10,6 @@ import (
 
 /* CODE */
 
-var sliceCache []string = nil
-
 // writeBytes 将 string 切片编码为二进制格式写入 dst
 func writeBytes(dst unsafe.Pointer, dstLen uintptr, sSlice []string) uintptr {
 	// 先计算所需空间大小
@@ -40,17 +38,8 @@ func writeBytes(dst unsafe.Pointer, dstLen uintptr, sSlice []string) uintptr {
 //export PluginWrapper
 func PluginWrapper(dst uintptr, dstLen uintptr, /* FORMAL PARAMETERS */) uintptr {
     ret := uintptr(0)
-    // 与处理不同，生成器可以采用缓存，因为它单个流程中只调用1次，且为单协程调用
-    if sliceCache != nil {
-        ret = writeBytes(unsafe.Pointer(dst), dstLen, sliceCache)
-        sliceCache = nil
-        return ret
-    }
 	sSlice := /* FUN_NAME */(/* ACTUAL PARAMETERS */)
 	ret = writeBytes(unsafe.Pointer(dst), dstLen, sSlice)
-	if ret > dstLen {
-	    sliceCache = sSlice
-	}
 	return ret
 }
 

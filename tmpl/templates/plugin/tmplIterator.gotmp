@@ -1,0 +1,35 @@
+package main
+
+import (
+	"encoding/binary"
+	"unsafe"
+)
+
+/* CUSTOM IMPORTS */
+
+/* CODE */
+
+
+func PluginWrapper(/* FORMAL PARAMETERS */) ([]byte, error) {
+	lengths, selector, ind := args[0].([]int), args[1].(int8), args[2].(int)
+	const sizeInt = 8
+	if selector == 1 {
+		var iterLen int = /* MINOR_FUN_NAME */(lengths, /* ACTUAL_PARAMETERS */)
+		ret := make([]byte, sizeInt)
+		binary.LittleEndian.PutUint64(ret, uint64(iterLen))
+		return ret, nil
+	}
+
+	int2Bytes := func(ints []int) []byte {
+		b := make([]byte, 4+sizeInt*len(ints))
+		for i, val := range ints {
+			*(*int)(unsafe.Pointer(&b[4+sizeInt*i])) = val
+		}
+		return b
+	}
+
+	iterIndexes := /* FUN_NAME */(lengths, ind, /* ACTUAL_PARAMETERS */)
+	return int2Bytes(iterIndexes), nil
+}
+
+func main() {}

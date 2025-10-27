@@ -1,0 +1,50 @@
+package main
+
+import "unsafe"
+
+/* CUSTOM IMPORTS */
+
+/* CODE */
+
+//export PluginWrapper
+func PluginWrapper(dst uintptr, dstLen uintptr, lengthBytes *byte, _ int,
+	selector int8, ind int, /* FORMAL_PARAMETERS */) uintptr {
+
+	bytes2Ints := func (ptrBytes uintptr) []int {
+		if ptrBytes == 0 {
+			return nil
+		}
+
+		j := *(*int32)(unsafe.Pointer(ptrBytes))
+		return unsafe.Slice((*int)(unsafe.Pointer(ptrBytes+4)), j)
+	}
+
+	ints2Bytes := func (ints []int, toWrite uintptr, wrBufLen uintptr) uintptr {
+		if toWrite == 0 {
+			return ^uintptr(0)
+		}
+
+		const sizeInt = 8
+
+		needed := len(ints)*sizeInt + 4
+
+		if int(wrBufLen) < needed {
+			return uintptr(needed)
+		}
+
+		*(*uint32)(unsafe.Pointer(toWrite)) = uint32(len(ints))
+
+		for i, val := range ints {
+			*(*int64)(unsafe.Pointer(toWrite + 4 + uintptr(i)*sizeInt)) = int64(val)
+		}
+
+		return uintptr(needed)
+	}
+	lengths := bytes2Ints(uintptr(unsafe.Pointer(lengthBytes)))
+	if selector == 1 {
+		iterLen := /* MINOR_FUN_NAME */(lengths, /* ACTUAL_PARAMETERS */)
+	    return uintptr(iterLen)
+	}
+	iterIndexes := /* FUN_NAME */(lengths, ind, /* ACTUAL_PARAMETERS */)
+	return ints2Bytes(iterIndexes, dst, dstLen)
+}

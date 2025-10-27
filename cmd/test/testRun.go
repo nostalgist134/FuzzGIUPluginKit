@@ -85,9 +85,9 @@ func writeTestTo(out string) {
 func callPluginByType(pType string, p fuzzTypes.Plugin, predefinedArgs ...any) any {
 	switch pType {
 	case convention.PluginTypes[convention.IndPTypePlProc]:
-		return FGPlugin.PayloadProcessor(p)
+		return FGPlugin.PayloadProcessor(p, nil)
 	case convention.PluginTypes[convention.IndPTypePlGen]:
-		return FGPlugin.PayloadGenerator(p)
+		return FGPlugin.PayloadGenerator(p, nil)
 	case convention.PluginTypes[convention.IndPTypeReact]:
 		var req *fuzzTypes.Req
 		var resp *fuzzTypes.Resp
@@ -101,13 +101,13 @@ func callPluginByType(pType string, p fuzzTypes.Plugin, predefinedArgs ...any) a
 		}
 		return FGPlugin.React(p, req, resp)
 	case convention.PluginTypes[convention.IndPTypeReqSender]:
-		var sendMeta *fuzzTypes.SendMeta
+		var RequestCtx *fuzzTypes.RequestCtx
 		if len(predefinedArgs) != 0 {
-			sendMeta = predefinedArgs[0].(*fuzzTypes.SendMeta)
+			RequestCtx = predefinedArgs[0].(*fuzzTypes.RequestCtx)
 		} else {
-			sendMeta = convention.GetStruct("*fuzzTypes.SendMeta").(*fuzzTypes.SendMeta)
+			RequestCtx = convention.GetStruct("*fuzzTypes.RequestCtx").(*fuzzTypes.RequestCtx)
 		}
-		return FGPlugin.SendRequest(p, sendMeta)
+		return FGPlugin.DoRequest(p, RequestCtx)
 	case convention.PluginTypes[convention.IndPTypePreproc]:
 		var fuzz *fuzzTypes.Fuzz
 		if len(predefinedArgs) != 0 {
@@ -115,7 +115,7 @@ func callPluginByType(pType string, p fuzzTypes.Plugin, predefinedArgs ...any) a
 		} else {
 			fuzz = convention.GetStruct("*fuzzTypes.Fuzz").(*fuzzTypes.Fuzz)
 		}
-		return FGPlugin.Preprocess(p, fuzz)
+		return FGPlugin.Preprocess(p, fuzz, nil)
 	}
 	return nil
 }
@@ -141,18 +141,23 @@ func callPluginExpr(callExpr string, pluginPath string) {
 	pName = pName[:strings.LastIndex(pName, ".")]
 	pName1 := filepath.Join("../../", pName)
 
+	var err error
+
 	// 切换到插件所在目录
 	cwd := env.GetCwd()
-	err := os.Chdir(filepath.Dir(pluginPath))
+	err = os.Chdir(filepath.Dir(pluginPath))
 	common.FailExit(err)
 	defer os.Chdir(cwd)
 
-	plugins := FGPlugin.ParsePluginsStr(callExpr)
+	plugins, err := FGPlugin.ParsePluginsStr(callExpr)
+	common.FailExit(err)
 
 	inf, err := common.GetPluginInfo(pluginPath)
 	common.FailExit(err)
+
 	fd := convention.BuildFd(inf)
 	preDefinedArgs := convention.GetReservedArgs(inf.Type)
+
 	// 测试插件
 	for i, p := range plugins {
 		fmt.Println(strings.Repeat("-", 25))

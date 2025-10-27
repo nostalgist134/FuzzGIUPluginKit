@@ -28,12 +28,6 @@ func ReadInputLine(prompt string, trim ...bool) string {
 	return line
 }
 
-func stringFromPtr(strBytes uintptr) string {
-	sb := strings.Builder{}
-	sb.WriteString(unsafe.String((*byte)(unsafe.Pointer(strBytes+4)), *(*int32)(unsafe.Pointer(strBytes))))
-	return sb.String()
-}
-
 // GetPluginInfo 调用插件的PluginInfo函数并返回
 func GetPluginInfo(pluginFile string) (*convention.PluginInfo, error) {
 	dll, err := syscall.LoadDLL(pluginFile)

@@ -11,16 +11,16 @@ import (
 /* CODE */
 
 //export PluginWrapper
-func PluginWrapper(dst *byte, dstLen int, sendMetaJson *byte, sendMetaJsonLen int) uintptr {
+func PluginWrapper(dst *byte, dstLen int, requestCtxJson *byte, requestCtxJsonLen int) uintptr {
 	// 解析输入
-	sendMetaJsonSlice := unsafe.Slice(sendMetaJson, sendMetaJsonLen)
-	sendMeta := new(fuzzTypes.SendMeta)
-	if err := json.Unmarshal(sendMetaJsonSlice, sendMeta); err != nil {
+	requestCtxJson := unsafe.Slice(requestCtxJson, requestCtxJsonLen)
+	requestCtx := new(fuzzTypes.RequestCtx)
+	if err := json.Unmarshal(requestCtxJson, RequestCtx); err != nil {
 		return ^uintptr(0)
 	}
 
 	// 调用核心逻辑
-	resp := /* FUN_NAME */(sendMeta)
+	resp := /* FUN_NAME */(RequestCtx)
 
 	// 序列化
 	respJson, err := json.Marshal(resp)
