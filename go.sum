@@ -19,6 +19,7 @@ github.com/nostalgist134/FuzzGIU v0.2.0-1/go.mod h1:pJJR3QigLUiIYnfsfw+5tkU2JyIX
 github.com/nostalgist134/FuzzGIU v0.2.0-2/go.mod h1:pJJR3QigLUiIYnfsfw+5tkU2JyIXqEemUPR9s/6p1Xs=
 github.com/nostalgist134/FuzzGIU v0.2.0-3 h1:0C5vsZbtM7xfosZIQaRo/iE8WPmeG3ub+VHrmWQ/IQ4=
 github.com/nostalgist134/FuzzGIU v0.2.0-3/go.mod h1:T7ljxCP2IHxkDytZyF2dBJdpyZEq215gzvrauieVqmo=
+github.com/nostalgist134/FuzzGIU v0.2.0-4/go.mod h1:UcLOP2z/dSbf/Lf2/K4xkwZku41o6sdNVpk9ESHC5BA=
 github.com/nostalgist134/reusableBytes v0.0.5 h1:Uc1fCUIG/z8MLOJnuquRsDJuhT54rRvj63ZOSZa1aB4=
 github.com/nostalgist134/reusableBytes v0.0.5/go.mod h1:mZemtIh4BOVlMNa+hxomvKz2+3IPuVTGSoBBOwdGKm8=
 github.com/nostalgist134/reusableBytes v0.0.9 h1:DQu3nEJ40w5wwyUW5NuoTDi9Mr73dFjDqkfxL4GedOs=

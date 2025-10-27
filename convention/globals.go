@@ -133,7 +133,7 @@ var fullFuzz = &fuzzTypes.Fuzz{
 		},
 		ReqTemplate: *fullReq,
 	},
-	Send: struct {
+	Request: struct {
 		Proxies             []string `json:"proxies,omitempty"`
 		HttpFollowRedirects bool     `json:"http_follow_redirects,omitempty"`
 		Retry               int      `json:"retry,omitempty"`

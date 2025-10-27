@@ -3,7 +3,7 @@ module github.com/nostalgist134/FuzzGIUPluginKit
 go 1.25.0
 
 require (
-	github.com/nostalgist134/FuzzGIU v0.2.0-3
+	github.com/nostalgist134/FuzzGIU v0.2.0-4
 	github.com/spf13/cobra v1.9.1
 )
 
