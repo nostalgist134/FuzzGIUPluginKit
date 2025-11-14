@@ -10,31 +10,30 @@ import (
 
 /* CODE */
 
-func writeBytes(dst unsafe.Pointer, dstLen uintptr, data []byte) uintptr {
-	needed := len(data)
-	if dst == nil || int(dstLen) < needed {
-		return uintptr(needed)
-	}
-
-	buf := unsafe.Slice((*byte)(dst), int(dstLen))
-	copy(buf, data)
-	return uintptr(needed)
-}
-
 //export PluginWrapper
 func PluginWrapper(dst uintptr, dstLen uintptr, fuzzJson *byte, jsonLen int, /* FORMAL PARAMETERS */) uintptr {
 	jsonSlice := unsafe.Slice(fuzzJson, jsonLen)
-	fuzz := new(fuzzTypes.Fuzz)
-	if err := json.Unmarshal(jsonSlice, fuzz); err != nil {
+	fuzz1 := new(fuzzTypes.Fuzz)
+	if err := json.Unmarshal(jsonSlice, fuzz1); err != nil {
 		return ^uintptr(0)
 	}
 
-	newFuzz := /* FUN_NAME */(fuzz, /* ACTUAL PARAMETERS */)
+	newFuzz := /* FUN_NAME */(fuzz1, /* ACTUAL PARAMETERS */)
 
 	newFuzzJson, err := json.Marshal(newFuzz)
 	if err != nil {
 		return ^uintptr(0)
 	}
+	writeBytes := func (dst unsafe.Pointer, dstLen uintptr, data []byte) uintptr {
+    	needed := len(data)
+    	if dst == nil || int(dstLen) < needed {
+    		return uintptr(needed)
+    	}
+
+    	buf := unsafe.Slice((*byte)(dst), int(dstLen))
+    	copy(buf, data)
+    	return uintptr(needed)
+    }
 	return writeBytes(unsafe.Pointer(dst), dstLen, newFuzzJson)
 }
 

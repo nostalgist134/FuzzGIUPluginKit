@@ -9,27 +9,26 @@ import (
 
 /* CODE */
 
-func writeString(dst unsafe.Pointer, src string, maxLen uintptr) uintptr {
-	if len(src) == 0 {
-		return uintptr(0)
-	}
-	if dst == nil {
-	    return uintptr(len(src))
-	}
-
-	srcBytes := unsafe.Slice(unsafe.StringData(src), len(src))
-	if len(srcBytes) > int(maxLen) {
-		return uintptr(len(srcBytes)) // 返回所需长度，不写入
-	}
-
-	dstSlice := unsafe.Slice((*byte)(dst), int(maxLen))
-	n := copy(dstSlice, srcBytes)
-	return uintptr(n)
-}
-
 //export PluginWrapper
 func PluginWrapper(dst uintptr, dstLen uintptr, payload string, /* FORMAL PARAMETERS */) uintptr {
 	processed := /* FUN_NAME */(payload, /* ACTUAL PARAMETERS */)
+	writeString := func (dst unsafe.Pointer, src string, maxLen uintptr) uintptr {
+    	if len(src) == 0 {
+    		return uintptr(0)
+    	}
+    	if dst == nil {
+    	    return uintptr(len(src))
+    	}
+
+    	srcBytes := unsafe.Slice(unsafe.StringData(src), len(src))
+    	if len(srcBytes) > int(maxLen) {
+    		return uintptr(len(srcBytes)) // 返回所需长度，不写入
+    	}
+
+    	dstSlice := unsafe.Slice((*byte)(dst), int(maxLen))
+    	n := copy(dstSlice, srcBytes)
+    	return uintptr(n)
+    }
 	ret := writeString(unsafe.Pointer(dst), processed, dstLen)
 	return ret
 }

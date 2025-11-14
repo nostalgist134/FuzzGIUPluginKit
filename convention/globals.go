@@ -57,7 +57,7 @@ var fullReq = &fuzzTypes.Req{
 	HttpSpec: fuzzTypes.HTTPSpec{
 		Method:     "POST",
 		Headers:    []string{"Hello: FUZZGIU", "User-Agent: milaogiu browser(114.54)", "Giu: 12345"},
-		Version:    "2.0",
+		Proto:      "HTTP/2",
 		ForceHttps: false,
 	},
 	Fields: []fuzzTypes.Field{

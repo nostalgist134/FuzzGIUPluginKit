@@ -10,35 +10,34 @@ import (
 
 /* CODE */
 
-// writeBytes 将 string 切片编码为二进制格式写入 dst
-func writeBytes(dst unsafe.Pointer, dstLen uintptr, sSlice []string) uintptr {
-	// 先计算所需空间大小
-	needed := 4 // 存放切片长度
-	for _, s := range sSlice {
-		needed += 4 + len(s)
-	}
-	// 如果 dst==nil 或空间不足，直接返回所需长度
-	if dst == nil || dstLen < uintptr(needed) {
-		return uintptr(needed)
-	}
-	buf := unsafe.Slice((*byte)(dst), int(dstLen))
-	// 写入切片长度
-	binary.LittleEndian.PutUint32(buf[:4], uint32(len(sSlice)))
-	offset := 4
-	// 写入每个字符串
-	for _, s := range sSlice {
-		binary.LittleEndian.PutUint32(buf[offset:offset+4], uint32(len(s)))
-		offset += 4
-		copy(buf[offset:], s)
-		offset += len(s)
-	}
-	return uintptr(offset)
-}
-
 //export PluginWrapper
 func PluginWrapper(dst uintptr, dstLen uintptr, /* FORMAL PARAMETERS */) uintptr {
     ret := uintptr(0)
 	sSlice := /* FUN_NAME */(/* ACTUAL PARAMETERS */)
+	// writeBytes 将 string 切片编码为二进制格式写入 dst
+    writeBytes := func (dst unsafe.Pointer, dstLen uintptr, sSlice []string) uintptr {
+    	// 先计算所需空间大小
+    	needed := 4 // 存放切片长度
+    	for _, s := range sSlice {
+    		needed += 4 + len(s)
+    	}
+    	// 如果 dst==nil 或空间不足，直接返回所需长度
+    	if dst == nil || dstLen < uintptr(needed) {
+    		return uintptr(needed)
+    	}
+    	buf := unsafe.Slice((*byte)(dst), int(dstLen))
+    	// 写入切片长度
+    	binary.LittleEndian.PutUint32(buf[:4], uint32(len(sSlice)))
+    	offset := 4
+    	// 写入每个字符串
+    	for _, s := range sSlice {
+    		binary.LittleEndian.PutUint32(buf[offset:offset+4], uint32(len(s)))
+    		offset += 4
+    		copy(buf[offset:], s)
+    		offset += len(s)
+    	}
+    	return uintptr(offset)
+    }
 	ret = writeBytes(unsafe.Pointer(dst), dstLen, sSlice)
 	return ret
 }
