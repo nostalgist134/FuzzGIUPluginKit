@@ -180,9 +180,9 @@ func runCmdBuild(cmd *cobra.Command, _ []string) {
 		var fd2 *convention.FuncDecl
 		minorFun = convention.PluginMinorFun[0]
 		fd2, _, err = goParser.FindFunction(pluginFile, minorFun)
-		if !errors.Is(err, os.ErrNotExist) {
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
 			common.FailExit(err)
-		} else if err != nil {
+		} else if errors.Is(err, os.ErrNotExist) {
 			minorFuncExist = false
 		} else {
 			minorFuncExist = true
@@ -228,7 +228,7 @@ func runCmdBuild(cmd *cobra.Command, _ []string) {
 	if out == "" {
 		out = "FuzzGIU" + convention.GetPluginFunName(pType) + env1.BinSuffix
 	}
-	fmt.Printf("output file: %s\n", out)
+	fmt.Printf("out file: %s\n", out)
 
 	// 根据需要生成PluginInfo函数
 	if genPi, _ := cmd.Flags().GetBool("info"); genPi {

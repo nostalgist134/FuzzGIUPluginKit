@@ -63,27 +63,27 @@ func GetTemplatesDir(dir string) []FileTmpl {
 }
 
 func GetTemplate(os, pType string) (string, error) {
-	basePath := "templates"
-	if pType == "fuzzTypes" {
-		basePath = pathJoin(basePath, pType, pType+".gotmp")
+	path := "templates"
+	if strings.Index(pType, "fuzzTypes") == 0 {
+		path = pathJoin(path, pType+".gotmp")
 		// 傻逼embed库只支持正斜杆，不支持反斜杆，windows用filepath.Join反斜杠就打不开，妈了个逼的调半天才发现不是我的问题，吃大便去吧
-		ft, err := templates.ReadFile(basePath)
+		ft, err := templates.ReadFile(path)
 		if err != nil {
 			return "", err
 		}
 		return string(ft), err
 	}
 	if os == "windows" {
-		basePath = pathJoin(basePath, "cgo")
+		path = pathJoin(path, "cgo")
 	} else {
-		basePath = pathJoin(basePath, "plugin")
+		path = pathJoin(path, "plugin")
 	}
 	fileName := strings.Title(pType) + ".gotmp"
 	if pType != "pluginInfo" {
 		fileName = "tmpl" + fileName
 	}
-	basePath = pathJoin(basePath, fileName)
-	t, err := templates.ReadFile(basePath)
+	path = pathJoin(path, fileName)
+	t, err := templates.ReadFile(path)
 	if err != nil {
 		return "", err
 	}

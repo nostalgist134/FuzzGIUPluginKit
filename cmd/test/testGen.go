@@ -23,7 +23,7 @@ var subCmdGen = &cobra.Command{
 	Each file will be automatically parsed according to its corresponding param's type: for the 
 	parameter of basic types, the file content will be read line by line as each test param value; 
 	for the struct parameters, the file will be parsed as json expression of one struct or array of
-	structs(use any form of each as you wish, program will parse automatically).
+	structs(use any form of each as your will, program will parse automatically).
 
 	Some plugin has parameter of struct type. If you don't want to write code to get these structs,
 	you can use -s flag to marshal a struct(whose value is settled, though) to a file and modify

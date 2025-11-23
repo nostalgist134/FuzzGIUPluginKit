@@ -8,7 +8,7 @@ import "unsafe"
 
 //export PluginWrapper
 func PluginWrapper(dst uintptr, dstLen uintptr, lengthBytes *byte, _ int,
-	selector int8, ind int, /* FORMAL_PARAMETERS */) uintptr {
+	selector int8, ind int, /* FORMAL PARAMETERS */) uintptr {
 
 	bytes2Ints := func (ptrBytes uintptr) []int {
 		if ptrBytes == 0 {
@@ -42,9 +42,11 @@ func PluginWrapper(dst uintptr, dstLen uintptr, lengthBytes *byte, _ int,
 	}
 	lengths := bytes2Ints(uintptr(unsafe.Pointer(lengthBytes)))
 	if selector == 1 {
-		iterLen := /* MINOR_FUN_NAME */(lengths, /* ACTUAL_PARAMETERS */)
+		iterLen := /* MINOR_FUN_NAME */(lengths, /* ACTUAL PARAMETERS */)
 	    return uintptr(iterLen)
 	}
-	iterIndexes := /* FUN_NAME */(lengths, ind, /* ACTUAL_PARAMETERS */)
+	iterIndexes := /* FUN_NAME */(lengths, ind, /* ACTUAL PARAMETERS */)
 	return ints2Bytes(iterIndexes, dst, dstLen)
 }
+
+func main() {}

@@ -27,27 +27,27 @@ func init() {
 	Cmd.Flags().BoolP("no-net", "n", false, "does not get fuzzTypes.go from net")
 }
 
-func getContentHttp(url string) (string, error) {
+func getContentHttp(url string) ([]byte, error) {
 	// 发起 HTTP GET 请求
 	resp, err := http.Get(url)
 	if err != nil {
-		return "", fmt.Errorf("failed: %w", err)
+		return nil, fmt.Errorf("failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	// 检查状态码
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("HTTP stat error: %s", resp.Status)
+		return nil, fmt.Errorf("HTTP stat error: %s", resp.Status)
 	}
 
 	// 读取整个响应体
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("failed to read body: %w", err)
+		return nil, fmt.Errorf("failed to read body: %w", err)
 	}
 
 	// 转换为字符串返回
-	return string(bodyBytes), nil
+	return bodyBytes, nil
 }
 
 // splitExistPath 拆分路径为存在部分和不存在部分
@@ -88,19 +88,65 @@ func addHelpers(baseDir string, moduleName string) error {
 	files := tmpl.GetTemplatesDir("helper")
 	// 创建并写入helper文件
 	for _, f := range files {
-		helperName := filepath.Join(helperDir, f.Name)
-		if strings.Index(helperName, ".gotmp") == len(helperName)-6 {
-			helperName = helperName[:len(helperName)-3]
-		}
+		helperName := strings.TrimSuffix(filepath.Join(helperDir, f.Name), "tmp")
 		fPtr, err := os.Create(helperName)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "failed to create file %s: %v\n", helperName, err)
+			fmt.Fprintf(os.Stderr, "failed to create '%s': %v\n", helperName, err)
 		}
 		contentStr := string(f.Content)
 		contentStr = tmpl.Replace(contentStr, tmpl.PHModuleName, moduleName)
 		_, err = fPtr.WriteString(contentStr)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "failed to write to file %s: %v\n", helperName, err)
+			fmt.Fprintf(os.Stderr, "failed to write to '%s': %v\n", helperName, err)
+		}
+	}
+	return nil
+}
+
+func addFuzzType(baseDir string, noNet bool) error {
+	var err error
+
+	// 创建fuzzTypes目录
+	fuzzTypesDir := filepath.Join(baseDir, "fuzzTypes")
+	err = os.MkdirAll(fuzzTypesDir, 0755)
+	common.FailExit(err)
+
+	templateFiles := tmpl.GetTemplatesDir("fuzzTypes")
+	fileNames := make([]string, len(templateFiles))
+	for i, f := range templateFiles {
+		fileNames[i] = strings.TrimSuffix(filepath.Join(fuzzTypesDir, f.Name), "tmp")
+	}
+
+	contentUrls := []string{
+		"https://raw.githubusercontent.com/nostalgist134/FuzzGIU/main/components/fuzzTypes/fuzzTypes.go",
+		"https://raw.githubusercontent.com/nostalgist134/FuzzGIU/main/components/fuzzTypes/receivers.go",
+	}
+
+	for i, fileName := range fileNames {
+		fmt.Print(fileName + ": ")
+		var f *os.File
+		f, err = os.Create(fileName)
+		if err != nil {
+			return err
+		}
+		filesCreated = append(filesCreated, f)
+		var content []byte
+		if !noNet { // 尝试从github上拉取
+			fmt.Print("from net...")
+			content, err = getContentHttp(contentUrls[i])
+			if err != nil {
+				fmt.Println("failed - ", err)
+			} else {
+				fmt.Println("success")
+			}
+		}
+		if err != nil || noNet { // github拉取失败或指定了从本地获取
+			fmt.Println("from embedded")
+			content = templateFiles[i].Content
+		}
+		_, err = f.Write(content)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
@@ -149,36 +195,15 @@ func createGoProj(path string, goVer string, code string, noNet bool) string {
 	_, err = f.WriteString(goMod)
 	common.FailExit(err)
 
-	// 创建components及fuzzTypes.go文件
-	fmt.Printf("fuzzTypes.go: ")
-	err = os.MkdirAll("./components/fuzzTypes", 0755)
-	common.FailExit(err)
-	ft, err := os.Create("./components/fuzzTypes/fuzzTypes.go")
-	common.FailExit(err)
-	filesCreated = append(filesCreated, ft)
-	defer ft.Close()
-
-	// 尝试从github上获取fuzzTypes.go，如果失败再读取模板文件
-	s := ""
-	contentUrl := "https://raw.githubusercontent.com/nostalgist134/FuzzGIU/main/components/fuzzTypes/fuzzTypes.go"
-	if !noNet {
-		s, err = getContentHttp(contentUrl)
-	}
-
-	if err != nil || s == "" {
-		if err != nil {
-			fmt.Printf("get from net failed: %v, ", err)
-		}
-		fmt.Println("from embedded")
-		s, err = tmpl.GetTemplate("", "fuzzTypes")
-		common.FailExit(err)
-	} else {
-		fmt.Printf("from github - %s\n", contentUrl)
-	}
-	_, err = ft.WriteString(s)
+	// 创建components目录
+	err = os.Mkdir("./components", 0755)
 	common.FailExit(err)
 
-	// 创建并写入helper文件
+	// 创建fuzzTypes包
+	err = addFuzzType("./components/", noNet)
+	common.FailExit(err)
+
+	// 创建helper包
 	err = addHelpers("./components/", moduleName)
 	common.FailExit(err)
 

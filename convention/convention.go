@@ -43,7 +43,7 @@ func GetFuncDecl(pluginType string) FuncDecl {
 func compareFuncDecl(fd FuncDecl, correctFd FuncDecl) (equal bool, reason string) {
 	if len(fd.Params) < len(correctFd.Params) {
 		equal = false
-		reason = fmt.Sprintf("argument count not enough, at lease %d arguments needed", len(correctFd.Params))
+		reason = fmt.Sprintf("argument count not enough, at least %d arguments needed", len(correctFd.Params))
 		return
 	}
 	for i, p := range correctFd.Params {
@@ -57,6 +57,7 @@ func compareFuncDecl(fd FuncDecl, correctFd FuncDecl) (equal bool, reason string
 		equal, reason = false, fmt.Sprintf(`return type incorrect, given: "%s", wanted: "%s"`, fd.RetType,
 			correctFd.RetType)
 	}
+	equal = true
 	return
 }
 
@@ -70,7 +71,7 @@ func CheckPluginMinorFunc(pType string, fd FuncDecl) (bool, string) {
 	if pType != PluginTypes[IndPTypeIterator] {
 		return true, ""
 	}
-	correctFd := FuncDecls[PluginTypes[IndPTypeIterator]]
+	correctFd := FuncDecls[PluginMinorFun[IndPTypeIteratorMinor]]
 	return compareFuncDecl(fd, correctFd)
 }
 
@@ -82,12 +83,12 @@ func genPluginFun(pluginType string) string {
 	// 参数列表
 	for _, p := range correctFd.Params {
 		sb.WriteString(p.Name + " " + p.Type)
-		if strings.ToLower(pluginType) != "reqsender" {
+		if strings.ToLower(pluginType) != strings.ToLower(PluginTypes[IndPTypeReqSender]) {
 			sb.WriteString(", ")
 		}
 	}
 	paraList := sb.String()
-	if strings.ToLower(pluginType) != "reqsender" {
+	if strings.ToLower(pluginType) != strings.ToLower(PluginTypes[IndPTypeReqSender]) {
 		paraList += "/* CUSTOM ARGUMENTS HERE */"
 	}
 	// 返回值
@@ -97,6 +98,8 @@ func genPluginFun(pluginType string) string {
 		retVal = "\"\""
 	case "[]string":
 		retVal = "[]string{}"
+	case "[]int":
+		retVal = "[]int{}"
 	default:
 		retVal = fmt.Sprintf("&%s{}", strings.TrimPrefix(correctFd.RetType, "*"))
 	}
@@ -107,32 +110,37 @@ func genPluginFun(pluginType string) string {
 
 // GenPlugInfoFun 生成PluginInfo函数
 func GenPlugInfoFun(pName, pType, goVer, usageFile string, params []ParaMeta) string {
-	usage, err := os.ReadFile(usageFile)
-	if usageFile != "" && err != nil {
-		fmt.Printf("read usage file failed - %v, set empty\n", err)
+	var usage string
+	if usageFile != "" {
+		b, err := os.ReadFile(usageFile)
+		if err != nil {
+			fmt.Printf("read usage file failed - %v, set empty\n", err)
+		} else {
+			usage = string(b)
+		}
 	}
 	pi := PluginInfo{
 		Name:      pName,
 		Type:      pType,
 		GoVersion: goVer,
-		UsageInfo: string(usage),
+		UsageInfo: usage,
 		Params:    params,
 	}
 	j, _ := json.Marshal(pi)
 	quoted := strconv.Quote(string(j))
 	pFun, err := tmpl.GetTemplate(env.GlobEnv.OS, "pluginInfo")
 	if err != nil {
-		fmt.Printf("gen PluginInfo failed, reason: %v. skip\n", err)
+		fmt.Printf("warning: gen PluginInfo failed: %v\n", err)
 	}
 	pFun = tmpl.Replace(pFun, tmpl.PHPlugInfo, quoted)
 	return pFun
 }
 
 // GetParamStrings 获取用于替换go模板文件中的参数占位符的字符串
-func GetParamStrings(os, pluginType string, params []Param) (string, string) {
+func GetParamStrings(os, pluginType string, params []Param) (formal string, actual string) {
 	correctFd := GetFuncDecl(pluginType)
 	if len(correctFd.Params) > len(params) {
-		return "", ""
+		return
 	}
 	formalParams := strings.Builder{}
 	actualParams := strings.Builder{}
@@ -153,7 +161,9 @@ func GetParamStrings(os, pluginType string, params []Param) (string, string) {
 			actualParams.WriteString(params[i].Name + ",")
 		}
 	}
-	return formalParams.String(), actualParams.String()
+	formal = formalParams.String()
+	actual = actualParams.String()
+	return
 }
 
 // GetReservedArgs 根据插件类型返回预留参数
@@ -165,6 +175,8 @@ func GetReservedArgs(pType string) []any {
 		return []any{new(fuzzTypes.Fuzz)}
 	case PluginTypes[IndPTypeReact]:
 		return []any{new(fuzzTypes.Req), new(fuzzTypes.Resp)}
+	case PluginTypes[IndPTypeIterator]:
+		return []any{make([]int, 10)}
 	}
 	return nil
 }
@@ -208,7 +220,7 @@ func DefMinorFun(pluginType string) string {
 	if pluginType != PluginTypes[IndPTypeIterator] {
 		return ""
 	}
-	return `func IterLen(lengths []int, /* FORMAL PARAMETERS */){
+	return `func IterLen(lengths []int, /* FORMAL PARAMETERS */) int {
 	return -1
 }
 `

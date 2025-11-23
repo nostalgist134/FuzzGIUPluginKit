@@ -24,14 +24,14 @@ type (
 
 	// Field 描述一个请求字段
 	Field struct {
-		Name  string `json:"name"`  // 字段名
-		Value string `json:"value"` // 字段值
+		Name  string `json:"name" xml:"name"`   // 字段名
+		Value string `json:"value" xml:"value"` // 字段值
 	}
 
 	HTTPSpec struct {
 		Method      string   `json:"method,omitempty" xml:"method,omitempty"`
 		Headers     []string `json:"headers,omitempty" xml:"header>headers,omitempty"`
-		Version     string   `json:"version,omitempty" xml:"version,omitempty"`
+		Proto       string   `json:"proto,omitempty" xml:"proto,omitempty"`
 		ForceHttps  bool     `json:"force_https,omitempty" xml:"force_https,omitempty"`
 		RandomAgent bool     `json:"http_random_agent,omitempty"`
 	}
@@ -128,15 +128,15 @@ type (
 			Preprocessors []Plugin               `json:"preprocessors,omitempty"` // 使用的自定义预处理器
 			ReqTemplate   Req                    `json:"request_tmpl,omitempty"`  // 含有fuzz关键字的请求模板
 		} `json:"preprocess,omitempty"`
-		// 发包阶段的设置
-		Send struct {
+		// 请求阶段的设置
+		Request struct {
 			Proxies             []string `json:"proxies,omitempty"`               // 使用的代理
 			HttpFollowRedirects bool     `json:"http_follow_redirects,omitempty"` // 是否重定向
 			Retry               int      `json:"retry,omitempty"`                 // 错误重试次数
 			RetryCode           string   `json:"retry_code,omitempty"`            // 返回特定状态码时重试
 			RetryRegex          string   `json:"retry_regex,omitempty"`           // 返回匹配正则时重试
 			Timeout             int      `json:"timeout,omitempty"`               // 超时时间
-		} `json:"send,omitempty"`
+		} `json:"request,omitempty"`
 		// 响应阶段的设置
 		React struct {
 			Reactor          Plugin `json:"reactor,omitempty"`      // 响应处理插件
@@ -162,7 +162,6 @@ type (
 	}
 )
 
-// Reaction使用的flag
 const (
 	ReactOutput = 1 << iota
 	ReactAddJob
@@ -171,6 +170,8 @@ const (
 	ReactMatch
 	ReactAddReq
 	ReactMerge
+
+	InfiniteLoop = -1
 )
 
 /* -----------下面是给plugin类用的序列化/反序列化函数，由于plugin用了any切片，因此需要稍微特殊处理一下----------- */
@@ -182,6 +183,9 @@ go默认情况下会将json字节中所有的数字转化为float64，这也就�
 原本我是准备使用json.Number实现数字的自动处理，但是现在还是放弃了，原因在于：如果一个any类型是float，但是它的小
 数位为0，这种情况下序列化之后它的点号会被去掉，也就无法分辨它到底是float还是int了
 插件系统调用约定中仅仅允许int、float64、string以及bool这4种类型的参数，因此其它的就不考虑了
+不过这么做的缺点就是：如果使用的fuzzTypes包没有这套序列化函数，就没办法正常序列化与反序列化，不过这个问题目前也只
+影响preprocessor类插件以及web api，fgpk默认使用github上的最新版fuzzTypes包，大体上没什么问题；但是web api
+提交job就必须提交与这套反序列化相同的job，到时候可能得再搞一套小工具出来方便外部使用
 */
 type marshalInterior struct {
 	Name string   `json:"name"`
@@ -226,7 +230,10 @@ func (p *Plugin) UnmarshalJSON(data []byte) error {
 			}
 			p.Args[i] = int(intVal)
 		case "bool":
-			boolVal, _ := strconv.ParseBool(val)
+			boolVal, err := strconv.ParseBool(val)
+			if err != nil {
+				return fmt.Errorf("incorrect %s value at arg index %d", typ, i)
+			}
 			p.Args[i] = boolVal
 		case "float64":
 			floatVal, err := strconv.ParseFloat(val, 64)

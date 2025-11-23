@@ -17,7 +17,7 @@ const (
 )
 
 var PluginFunNames = []string{"PayloadProcessor", "React", "PayloadGenerator", "DoRequest", "Preprocess", "IterIndex"}
-var PluginTypes = []string{"payloadProc", "reactor", "payloadGen", "reqSender", "preprocess", "iterator"}
+var PluginTypes = []string{"payloadProc", "reactor", "payloadGen", "requester", "preprocess", "iterator"}
 var PluginMinorFun = []string{"IterLen"}
 
 // FuncDecls 每种插件的约定函数原型
@@ -100,12 +100,8 @@ var fullFilter = fuzzTypes.Match{
 }
 
 var fullFuzz = &fuzzTypes.Fuzz{
-	Preprocess: struct {
-		PlTemp        map[string]fuzzTypes.PayloadTemp `json:"pl_temp,omitempty"`
-		Preprocessors []fuzzTypes.Plugin               `json:"preprocessors,omitempty"` // 使用的自定义预处理器
-		ReqTemplate   fuzzTypes.Req                    `json:"request_tmpl,omitempty"`  // 含有fuzz关键字的请求模板
-	}{
-		PlTemp: map[string]fuzzTypes.PayloadTemp{
+	Preprocess: fuzzTypes.FuzzStagePreprocess{
+		PlMeta: map[string]*fuzzTypes.PayloadMeta{
 			"FUZZ1": {
 				Processors: []fuzzTypes.Plugin{
 					{"addslashes", nil},
@@ -133,14 +129,7 @@ var fullFuzz = &fuzzTypes.Fuzz{
 		},
 		ReqTemplate: *fullReq,
 	},
-	Request: struct {
-		Proxies             []string `json:"proxies,omitempty"`
-		HttpFollowRedirects bool     `json:"http_follow_redirects,omitempty"`
-		Retry               int      `json:"retry,omitempty"`
-		RetryCode           string   `json:"retry_code,omitempty"`
-		RetryRegex          string   `json:"retry_regex,omitempty"`
-		Timeout             int      `json:"timeout,omitempty"`
-	}{
+	Request: fuzzTypes.FuzzStageRequest{
 		Proxies:             []string{"http://127.0.0.1:8080", "http://127.0.0.1:7890"},
 		HttpFollowRedirects: true,
 		Retry:               2,
@@ -148,31 +137,11 @@ var fullFuzz = &fuzzTypes.Fuzz{
 		RetryRegex:          "giu",
 		Timeout:             3,
 	},
-	React: struct {
-		Reactor          fuzzTypes.Plugin `json:"reactor,omitempty"`      // 响应处理插件
-		Filter           fuzzTypes.Match  `json:"filter,omitempty"`       // 过滤
-		Matcher          fuzzTypes.Match  `json:"matcher,omitempty"`      // 匹配
-		IgnoreError      bool             `json:"ignore_error,omitempty"` // 是否忽略发送过程中出现的错误
-		RecursionControl struct {
-			RecursionDepth    int               `json:"recursion_depth,omitempty"`     // 当前递归深度
-			MaxRecursionDepth int               `json:"max_recursion_depth,omitempty"` // 最大递归深度
-			Keyword           string            `json:"keyword,omitempty"`
-			StatCodes         []fuzzTypes.Range `json:"stat_codes,omitempty"`
-			Regex             string            `json:"regex,omitempty"`
-			Splitter          string            `json:"splitter,omitempty"`
-		} `json:"recursion_control,omitempty"`
-	}{
+	React: fuzzTypes.FuzzStageReact{
 		Reactor: fuzzTypes.Plugin{Name: "test", Args: []any{1, 2, 3}},
 		Filter:  fullFilter,
 		Matcher: fullFilter,
-		RecursionControl: struct {
-			RecursionDepth    int               `json:"recursion_depth,omitempty"`
-			MaxRecursionDepth int               `json:"max_recursion_depth,omitempty"`
-			Keyword           string            `json:"keyword,omitempty"`
-			StatCodes         []fuzzTypes.Range `json:"stat_codes,omitempty"`
-			Regex             string            `json:"regex,omitempty"`
-			Splitter          string            `json:"splitter,omitempty"`
-		}{
+		RecursionControl: fuzzTypes.ReactRecursionControl{
 			RecursionDepth:    3,
 			MaxRecursionDepth: 5,
 			Keyword:           "FUZZ1",
@@ -181,12 +150,7 @@ var fullFuzz = &fuzzTypes.Fuzz{
 			Splitter:          "/",
 		},
 	},
-	Control: struct {
-		PoolSize   int                     `json:"pool_size,omitempty"`   // 使用的协程池大小
-		Delay      time.Duration           `json:"delay,omitempty"`       // 每次提交任务前的延迟
-		OutSetting fuzzTypes.OutputSetting `json:"out_setting,omitempty"` // 输出设置
-		IterCtrl   fuzzTypes.Iteration     `json:"iter_ctrl,omitempty"`   // 迭代控制
-	}{
+	Control: fuzzTypes.FuzzControl{
 		PoolSize: 64,
 		Delay:    50,
 		OutSetting: fuzzTypes.OutputSetting{
