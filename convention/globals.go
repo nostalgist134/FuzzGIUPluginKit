@@ -84,7 +84,7 @@ var fullRequestCtx = &fuzzTypes.RequestCtx{
 	Proxy:               "http://127.0.0.1:8080",
 	HttpFollowRedirects: true,
 	Retry:               3,
-	RetryCode:           "401-403,502,503",
+	RetryCodes:          []fuzzTypes.Range{{401, 403}, {502, 502}, {503, 503}},
 	RetryRegex:          "nishigiu",
 	Timeout:             10,
 }
@@ -133,7 +133,7 @@ var fullFuzz = &fuzzTypes.Fuzz{
 		Proxies:             []string{"http://127.0.0.1:8080", "http://127.0.0.1:7890"},
 		HttpFollowRedirects: true,
 		Retry:               2,
-		RetryCode:           "405",
+		RetryCodes:          []fuzzTypes.Range{{404, 406}, {407, 409}},
 		RetryRegex:          "giu",
 		Timeout:             3,
 	},
