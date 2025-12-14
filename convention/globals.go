@@ -7,12 +7,12 @@ import (
 )
 
 const (
-	IndPTypePlProc        = 0
-	IndPTypeReact         = 1
-	IndPTypePlGen         = 2
-	IndPTypeReqSender     = 3
-	IndPTypePreproc       = 4
-	IndPTypeIterator      = 5
+	IndPTypePlProc = iota
+	IndPTypeReact
+	IndPTypePlGen
+	IndPTypeRequester
+	IndPTypePreproc
+	IndPTypeIterator
 	IndPTypeIteratorMinor = 0
 )
 
@@ -34,7 +34,7 @@ var FuncDecls = map[string]FuncDecl{
 		Params:  []Param{},
 		RetType: "[]string",
 	},
-	PluginTypes[IndPTypeReqSender]: {
+	PluginTypes[IndPTypeRequester]: {
 		Params:  []Param{{Name: "requestCtx", Type: "*fuzzTypes.RequestCtx"}},
 		RetType: "*fuzzTypes.Resp",
 	},
@@ -69,7 +69,7 @@ var fullReq = &fuzzTypes.Req{
 }
 
 var fullResp = &fuzzTypes.Resp{
-	HttpResponse:      nil,
+	StatCode:          200,
 	ResponseTime:      5 * time.Millisecond,
 	Size:              999,
 	Words:             569,
@@ -108,8 +108,8 @@ var fullFuzz = &fuzzTypes.Fuzz{
 					{"base64", nil},
 				},
 				Generators: fuzzTypes.PlGen{
-					Type: "wordlist",
-					Gen: []fuzzTypes.Plugin{
+					Wordlists: []string{"1.txt", "2.txt"},
+					Plugins: []fuzzTypes.Plugin{
 						{"dict.txt", nil},
 					},
 				},
@@ -120,8 +120,8 @@ var fullFuzz = &fuzzTypes.Fuzz{
 					{"base64", nil},
 				},
 				Generators: fuzzTypes.PlGen{
-					Type: "wordlist",
-					Gen: []fuzzTypes.Plugin{
+					Wordlists: []string{"1.txt", "2.txt"},
+					Plugins: []fuzzTypes.Plugin{
 						{"dict.txt", nil},
 					},
 				},

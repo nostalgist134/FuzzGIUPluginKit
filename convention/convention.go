@@ -83,12 +83,12 @@ func genPluginFun(pluginType string) string {
 	// 参数列表
 	for _, p := range correctFd.Params {
 		sb.WriteString(p.Name + " " + p.Type)
-		if strings.ToLower(pluginType) != strings.ToLower(PluginTypes[IndPTypeReqSender]) {
+		if strings.ToLower(pluginType) != strings.ToLower(PluginTypes[IndPTypeRequester]) {
 			sb.WriteString(", ")
 		}
 	}
 	paraList := sb.String()
-	if strings.ToLower(pluginType) != strings.ToLower(PluginTypes[IndPTypeReqSender]) {
+	if strings.ToLower(pluginType) != strings.ToLower(PluginTypes[IndPTypeRequester]) {
 		paraList += "/* CUSTOM ARGUMENTS HERE */"
 	}
 	// 返回值
@@ -166,17 +166,17 @@ func GetParamStrings(os, pluginType string, params []Param) (formal string, actu
 	return
 }
 
-// GetReservedArgs 根据插件类型返回预留参数
-func GetReservedArgs(pType string) []any {
+// GetContextArgs 根据插件类型返回预留参数
+func GetContextArgs(pType string) []any {
 	switch pType {
-	case PluginTypes[IndPTypeReqSender]:
+	case PluginTypes[IndPTypeRequester]:
 		return []any{new(fuzzTypes.RequestCtx)}
 	case PluginTypes[IndPTypePreproc]:
 		return []any{new(fuzzTypes.Fuzz)}
 	case PluginTypes[IndPTypeReact]:
 		return []any{new(fuzzTypes.Req), new(fuzzTypes.Resp)}
 	case PluginTypes[IndPTypeIterator]:
-		return []any{make([]int, 10)}
+		return []any{make([]int, 10), 1}
 	}
 	return nil
 }
@@ -238,6 +238,8 @@ func GetStruct(structType string) any {
 		return &fuzzTypes.RequestCtx{}
 	case "*fuzzTypes.Reaction":
 		return &fuzzTypes.Reaction{}
+	case "[]int":
+		return []int{}
 	default:
 		return nil
 	}

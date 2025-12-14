@@ -82,40 +82,56 @@ func writeTestTo(out string) {
 }
 
 // callPluginByType 根据插件类型调用插件函数
-func callPluginByType(pType string, p fuzzTypes.Plugin, predefinedArgs ...any) any {
+func callPluginByType(pType string, p fuzzTypes.Plugin, contextArgs ...any) any {
 	switch pType {
 	case convention.PluginTypes[convention.IndPTypePlProc]:
 		return FGPlugin.PayloadProcessor(p, nil)
 	case convention.PluginTypes[convention.IndPTypePlGen]:
 		return FGPlugin.PayloadGenerator(p, nil)
 	case convention.PluginTypes[convention.IndPTypeReact]:
-		var req *fuzzTypes.Req
-		var resp *fuzzTypes.Resp
+		var (
+			req  *fuzzTypes.Req
+			resp *fuzzTypes.Resp
+		)
 		// 若指定了固定参数列表，则使用指定的，否则使用默认值，下面也一样
-		if len(predefinedArgs) > 1 {
-			req = predefinedArgs[0].(*fuzzTypes.Req)
-			resp = predefinedArgs[1].(*fuzzTypes.Resp)
+		if len(contextArgs) > 1 {
+			req = contextArgs[0].(*fuzzTypes.Req)
+			resp = contextArgs[1].(*fuzzTypes.Resp)
 		} else {
 			req = convention.GetFullStruct("*fuzzTypes.Req").(*fuzzTypes.Req)
 			resp = convention.GetFullStruct("*fuzzTypes.Resp").(*fuzzTypes.Resp)
 		}
 		return FGPlugin.React(p, req, resp)
-	case convention.PluginTypes[convention.IndPTypeReqSender]:
+	case convention.PluginTypes[convention.IndPTypeRequester]:
 		var RequestCtx *fuzzTypes.RequestCtx
-		if len(predefinedArgs) != 0 {
-			RequestCtx = predefinedArgs[0].(*fuzzTypes.RequestCtx)
+		if len(contextArgs) != 0 {
+			RequestCtx = contextArgs[0].(*fuzzTypes.RequestCtx)
 		} else {
 			RequestCtx = convention.GetStruct("*fuzzTypes.RequestCtx").(*fuzzTypes.RequestCtx)
 		}
 		return FGPlugin.DoRequest(p, RequestCtx)
 	case convention.PluginTypes[convention.IndPTypePreproc]:
 		var fuzz *fuzzTypes.Fuzz
-		if len(predefinedArgs) != 0 {
-			fuzz = predefinedArgs[0].(*fuzzTypes.Fuzz)
+		if len(contextArgs) != 0 {
+			fuzz = contextArgs[0].(*fuzzTypes.Fuzz)
 		} else {
 			fuzz = convention.GetStruct("*fuzzTypes.Fuzz").(*fuzzTypes.Fuzz)
 		}
 		return FGPlugin.Preprocess(p, fuzz, nil)
+	case convention.PluginTypes[convention.IndPTypeIterator]:
+		var lengths []int
+		if len(contextArgs) != 0 {
+			lengths = contextArgs[0].([]int)
+		} else {
+			lengths = make([]int, 5)
+		}
+		out := make([]int, len(lengths))
+		if p.Args[0] == FGPlugin.SelectIterIndex {
+			FGPlugin.IterIndex(p, lengths, out)
+			return out
+		} else {
+			return FGPlugin.IterLen(p, lengths)
+		}
 	}
 	return nil
 }
@@ -156,15 +172,15 @@ func callPluginExpr(callExpr string, pluginPath string) {
 	common.FailExit(err)
 
 	fd := convention.BuildFd(inf)
-	preDefinedArgs := convention.GetReservedArgs(inf.Type)
+	contextArgs := convention.GetContextArgs(inf.Type)
 
 	// 测试插件
 	for i, p := range plugins {
 		fmt.Println(strings.Repeat("-", 25))
 
 		argListCmp := p.Args
-		if preDefinedArgs != nil {
-			argListCmp = append(preDefinedArgs, argListCmp...)
+		if contextArgs != nil {
+			argListCmp = append(contextArgs, argListCmp...)
 		}
 
 		// 穿越前的路径用于输出
@@ -198,7 +214,7 @@ func callPluginTestFile(filePath string, pluginPath string) {
 	common.FailExit(err)
 	fd := convention.BuildFd(inf)
 
-	preReservedArgs := convention.GetReservedArgs(inf.Type)
+	contextArgs := convention.GetContextArgs(inf.Type)
 
 	// 加载测试用例文件
 	var tests []Test
@@ -211,7 +227,7 @@ func callPluginTestFile(filePath string, pluginPath string) {
 	err = decoder.Decode(&tests)
 	common.FailExit(err)
 
-	preNum := len(preReservedArgs)
+	ctxArgNum := len(contextArgs)
 
 	for i, test := range tests {
 		fmt.Println(strings.Repeat("-", 25))
@@ -219,15 +235,15 @@ func callPluginTestFile(filePath string, pluginPath string) {
 		convertFail := false
 
 		// 将map转为预定义参数对应的类型
-		for j := 0; j < len(preReservedArgs); j++ {
+		for j := 0; j < len(contextArgs); j++ {
 			b, _ := json.Marshal(test.Args[j])
-			err = json.Unmarshal(b, preReservedArgs[j])
+			err = json.Unmarshal(b, contextArgs[j])
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "test#%d argument#%d conversion error: %v. skip\n", i, j, err)
 				convertFail = true
 				break
 			}
-			test.Args[j] = preReservedArgs[j]
+			test.Args[j] = contextArgs[j]
 		}
 
 		if convertFail {
@@ -274,11 +290,11 @@ func callPluginTestFile(filePath string, pluginPath string) {
 		// 分离预定义参数，调用插件
 		p := fuzzTypes.Plugin{
 			Name: pName,
-			Args: test.Args[preNum:],
+			Args: test.Args[ctxArgNum:],
 		}
 
 		fmt.Println("test on: ", test)
-		result := callPluginByType(inf.Type, p, preReservedArgs...)
+		result := callPluginByType(inf.Type, p, contextArgs...)
 		fmt.Println("result: ", result)
 
 		// 比较返回值与期望值

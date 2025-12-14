@@ -103,7 +103,7 @@ func addHelpers(baseDir string, moduleName string) error {
 	return nil
 }
 
-func addFuzzType(baseDir string, noNet bool) error {
+func addFuzzType(baseDir string, noNet bool, moduleName string) error {
 	var err error
 
 	// 创建fuzzTypes目录
@@ -144,6 +144,10 @@ func addFuzzType(baseDir string, noNet bool) error {
 			fmt.Println("from embedded")
 			content = templateFiles[i].Content
 		}
+		content = tmpl.ReplaceBytes(content, "github.com/nostalgist134/FuzzGIU/components/common",
+			"/* MODULE_NAME *//components/helper")
+		content = tmpl.ReplaceBytes(content, "common.RegexMatch", "helper.RegexMatch")
+		content = tmpl.ReplaceBytes(content, tmpl.PHModuleName, moduleName)
 		_, err = f.Write(content)
 		if err != nil {
 			return err
@@ -200,7 +204,7 @@ func createGoProj(path string, goVer string, code string, noNet bool) string {
 	common.FailExit(err)
 
 	// 创建fuzzTypes包
-	err = addFuzzType("./components/", noNet)
+	err = addFuzzType("./components/", noNet, moduleName)
 	common.FailExit(err)
 
 	// 创建helper包

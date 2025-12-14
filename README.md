@@ -1,6 +1,6 @@
 # 项目介绍
 
-`fuzzGIUPluginKit`是一套用于辅助开发和测试[fuzzGIU](https://github.com/nostalgist134/FuzzGIU)插件的工具链。
+`FuzzGIUPluginKit`是一套用于辅助开发和测试[FuzzGIU](https://github.com/nostalgist134/FuzzGIU)插件的工具链。
 
 ## 安装
 
@@ -15,7 +15,7 @@ go build
 
 # 使用方法
 
-`fuzzGIUPluginKit`提供了4个子命令，分别用于开发、编译与测试插件
+`FuzzGIUPluginKit`提供了4个子命令，分别用于开发、编译与测试插件
 
 ``````powershell
 PS H:\tools\fuzz\FuzzGIU> .\fgpk.exe -h
@@ -151,7 +151,7 @@ Flags:
 
 工具支持将测试结果与期望值进行比较，若要指定测试的期望值，则可在`-f`指定和参数数量相同的文件之外再多加一个文件，最后一个文件会被作为测试期望值的文件源。
 
-每个文件源含有的值的数量可以不同，在这种情况下，工具则会按照值最多的文件源生成测试数据，值较少的文件源，其值列表会被循环使用（类似于fuzzGIU的`pitchfork-cycle`模式）。生成的测试数据同样通过`-o`选项输出文件名。
+每个文件源含有的值的数量可以不同，在这种情况下，工具则会按照值最多的文件源生成测试数据，值较少的文件源，其值列表会被循环使用（类似于FuzzGIU的`pitchfork-cycle`模式）。生成的测试数据同样通过`-o`选项输出文件名。
 
 #### `test run`子命令
 

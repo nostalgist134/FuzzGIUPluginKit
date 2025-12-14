@@ -151,7 +151,7 @@ func any2Str(a any) string {
 	return fmt.Sprintf("%v", a)
 }
 
-// genTestsFiles 从文件中读取测试数据
+// genTestsFiles 从文件中读取测试数据，并生成测试例文件
 func genTestsFiles(fd convention.FuncDecl, fileNames string) ([]*Test, error) {
 	tests := make([]*Test, 0)
 	fnames := strings.Split(fileNames, ",")

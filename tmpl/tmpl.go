@@ -1,6 +1,7 @@
 package tmpl
 
 import (
+	"bytes"
 	"embed"
 	"io/fs"
 	"strings"
@@ -92,4 +93,8 @@ func GetTemplate(os, pType string) (string, error) {
 
 func Replace(src string, placeHolder string, to string) string {
 	return strings.Replace(src, placeHolder, to, -1)
+}
+
+func ReplaceBytes(src []byte, placeHolder string, to string) []byte {
+	return bytes.Replace(src, []byte(placeHolder), []byte(to), -1)
 }
