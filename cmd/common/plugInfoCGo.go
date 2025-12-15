@@ -3,30 +3,12 @@
 package common
 
 import (
-	"bufio"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/nostalgist134/FuzzGIUPluginKit/convention"
-	"os"
-	"strings"
 	"syscall"
 	"unsafe"
 )
-
-// ReadInputLine 从用户输入中读取一行
-func ReadInputLine(prompt string, trim ...bool) string {
-	fmt.Print(prompt)
-	reader := bufio.NewReader(os.Stdin)
-	line, err := reader.ReadString('\n')
-	if err != nil {
-		panic(err)
-	}
-	if len(trim) > 0 && trim[0] || len(trim) == 0 {
-		return strings.TrimSpace(line)
-	}
-	return line
-}
 
 // GetPluginInfo 调用插件的PluginInfo函数并返回
 func GetPluginInfo(pluginFile string) (*convention.PluginInfo, error) {

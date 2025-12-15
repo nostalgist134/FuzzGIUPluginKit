@@ -55,6 +55,8 @@ github.com/nostalgist134/FuzzGIU v0.2.8-2 h1:Bl1T0AWZM2sRMlVl8rJKVqpTaahBrWdRwZh
 github.com/nostalgist134/FuzzGIU v0.2.8-2/go.mod h1:lUNNj+0yumKI7psYD0bw3zUmZqq6nwOrRw3Xva2RfN8=
 github.com/nostalgist134/FuzzGIU v0.2.8-3 h1:fNzO8QZdMlZ0CkUvWAijPnud0KoPY8B9F6NLaUYX8tU=
 github.com/nostalgist134/FuzzGIU v0.2.8-3/go.mod h1:lUNNj+0yumKI7psYD0bw3zUmZqq6nwOrRw3Xva2RfN8=
+github.com/nostalgist134/FuzzGIU v0.2.8-4 h1:9tpYSjhc9Av7NXAUn5iR+JMHnOPDvzsRVIynkDIC7P8=
+github.com/nostalgist134/FuzzGIU v0.2.8-4/go.mod h1:n+QYnnRdAZCiln74UdaL0fPfJRuctr4f2qT/iMSTspA=
 github.com/nostalgist134/reusableBytes v0.0.5 h1:Uc1fCUIG/z8MLOJnuquRsDJuhT54rRvj63ZOSZa1aB4=
 github.com/nostalgist134/reusableBytes v0.0.5/go.mod h1:mZemtIh4BOVlMNa+hxomvKz2+3IPuVTGSoBBOwdGKm8=
 github.com/nostalgist134/reusableBytes v0.0.9 h1:DQu3nEJ40w5wwyUW5NuoTDi9Mr73dFjDqkfxL4GedOs=

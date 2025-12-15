@@ -1,8 +1,10 @@
 package common
 
 import (
+	"bufio"
 	"fmt"
 	"os"
+	"strings"
 )
 
 var subCmd = ""
@@ -32,4 +34,18 @@ func FailExit(reason any, code ...int) {
 	fmt.Fprintf(os.Stderr, "%s execution failed, reason: %s\nnow exitting...\n", subCmd, reason)
 	exitDefer()
 	os.Exit(exitCode)
+}
+
+// ReadInputLine 从用户输入中读取一行
+func ReadInputLine(prompt string, trim ...bool) string {
+	fmt.Print(prompt)
+	reader := bufio.NewReader(os.Stdin)
+	line, err := reader.ReadString('\n')
+	if err != nil {
+		panic(err)
+	}
+	if len(trim) > 0 && trim[0] || len(trim) == 0 {
+		return strings.TrimSpace(line)
+	}
+	return line
 }
